@@ -58,7 +58,7 @@ export function MobileHistorie({ entries, employers, employer, onEdit, onDelete 
     return m;
   }, [employers]);
 
-  // Zusammenfassung: noch nicht abgerechnete Eintraege (gesamter Arbeitgeber, unabhaengig von der Suche)
+  // Zusammenfassung: noch nicht abgerechnete Einträge (gesamter Arbeitgeber, unabhängig von der Suche)
   const offen = useMemo(() => {
     const list = entries.filter(e => !e.abgerechnet);
     return { count: list.length, min: list.reduce((s, e) => s + e.dauerMinuten, 0) };

@@ -76,7 +76,7 @@ export function Report({ entries, employer, employers, periodeKey, isCurrentPeri
   })();
 
   // Monatsdaten mit Soll, Ist, Diff, Saldo (anteiliges Soll für aktuellen Monat)
-  // Pauschale wird für Arbeitgeber mit Soll hinzugerechnet – gleich wie Dashboard
+  // Pauschale wird für Arbeitgeber mit Soll hinzugerechnet, gleich wie im Dashboard
   const monthlyRows = useMemo(() => {
     const map = new Map<number, { total: number; count: number; entries: TimeEntry[] }>();
     MONAT_ORDER.forEach((m) => map.set(m, { total: 0, count: 0, entries: [] }));
@@ -141,7 +141,7 @@ export function Report({ entries, employer, employers, periodeKey, isCurrentPeri
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Bericht {employer} – {getPeriodeLabel(modus)} {selectedLabel}
+            Bericht {employer}: {getPeriodeLabel(modus)} {selectedLabel}
           </h1>
           {isCurrentSj && (
             <p className="text-sm text-primary-600 font-medium">Aktuelle Periode</p>
@@ -317,7 +317,7 @@ export function Report({ entries, employer, employers, periodeKey, isCurrentPeri
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
               <div>
                 <h2 className="text-lg font-bold text-gray-900">
-                  Tätigkeiten – {getMonatName(modalMonth)}
+                  Tätigkeiten im {getMonatName(modalMonth)}
                 </h2>
                 <p className="text-sm text-gray-500">
                   {modalEntries.length} Einträge &middot; {formatStunden(modalTotalMin)} Std total ({formatDauer(modalTotalMin)})

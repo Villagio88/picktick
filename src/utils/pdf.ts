@@ -113,8 +113,8 @@ export function generateAbrechnung({ entries, employer, rechnungsnummer, stunden
     const std = e.dauerMinuten / 60;
     const datumStr = fmtDate(e.datum);
     const desc = e.leistung && e.leistung !== e.beschreibung
-      ? `${datumStr} – ${e.beschreibung} (${e.leistung})`
-      : `${datumStr} – ${e.beschreibung}`;
+      ? `${datumStr}: ${e.beschreibung} (${e.leistung})`
+      : `${datumStr}: ${e.beschreibung}`;
 
     if (rate > 0) {
       body.push([

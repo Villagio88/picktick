@@ -11,7 +11,7 @@ services:
       PORT: "3001"
       HOST: "0.0.0.0"
       TZ: "Europe/Zurich"
-      # Passwort für die Anmeldung. Ohne Passwort läuft PickTick offen, nur im geschützten Netz so betreiben.
+      # Passwort für die Anmeldung, Pflicht. (Ohne Docker startet PickTick ohne Passwort offen, nur fürs eigene Netz.)
       PICKTICK_PASSWORT: "${PICKTICK_PASSWORT:?Bitte PICKTICK_PASSWORT in der Datei .env setzen}"
       # Optional: Schlüssel für Skripte und Kurzbefehle (Authorization: Bearer <schlüssel>)
       PICKTICK_API_SCHLUESSEL: "${PICKTICK_API_SCHLUESSEL:-}"

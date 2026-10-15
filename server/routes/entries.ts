@@ -44,6 +44,9 @@ function validateEntry(body: unknown): { valid: true; entry: TimeEntry } | { val
   if (!isString(obj.beschreibung)) return { valid: false, error: 'beschreibung must be a string' };
   if (!isNonEmptyString(obj.fuerWen)) return { valid: false, error: 'fuerWen is required' };
   if (!isString(obj.datum)) return { valid: false, error: 'datum must be a string' };
+  // Alteinträge ohne Uhrzeit: fehlende Zeiten gelten als leer
+  if (obj.startZeit == null) obj.startZeit = '';
+  if (obj.endZeit == null) obj.endZeit = '';
   if (!isString(obj.startZeit)) return { valid: false, error: 'startZeit must be a string' };
   if (!isString(obj.endZeit)) return { valid: false, error: 'endZeit must be a string' };
   if (typeof obj.dauerMinuten !== 'number' || obj.dauerMinuten < 0) {

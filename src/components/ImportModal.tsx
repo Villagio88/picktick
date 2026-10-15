@@ -71,7 +71,7 @@ export function ImportModal({
                 CSV-Datei hierher ziehen oder klicken
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                Kompatibel mit dem Notion/Clockodo Export-Format
+                Liest den CSV-Export von PickTick
               </p>
             </div>
             <input

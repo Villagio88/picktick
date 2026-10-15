@@ -42,8 +42,11 @@ function ladeGeheimnis(): Buffer {
 
 const geheimnis = ladeGeheimnis();
 
+// Schlüssel aus Geheimnis und Passwort: ein neues Passwort beendet alle bestehenden Sitzungen.
+const signaturSchluessel = crypto.createHmac('sha256', geheimnis).update(`passwort:${passwort}`).digest();
+
 function signiere(wert: string): string {
-  return crypto.createHmac('sha256', geheimnis).update(wert).digest('hex');
+  return crypto.createHmac('sha256', signaturSchluessel).update(wert).digest('hex');
 }
 
 /** Vergleich in konstanter Zeit, auch bei unterschiedlicher Länge. */
@@ -89,9 +92,13 @@ function setzeCookie(req: Request, res: Response, wert: string, maxAgeSek: numbe
     `${COOKIE}=${encodeURIComponent(wert)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${maxAgeSek}${sicher ? '; Secure' : ''}`);
 }
 
-/** Schützt alle API-Routen ausser der Anmeldung selbst. */
+/**
+ * Schützt alle API-Routen ausser der Anmeldung selbst. Wird mit app.use('/api', …)
+ * eingehängt; Express vergleicht Pfade ohne Gross- und Kleinschreibung, deshalb greift
+ * der Schutz auch für /API/… und der Vergleich unten ist ebenfalls unabhängig davon.
+ */
 export function schuetzeApi(req: Request, res: Response, next: NextFunction): void {
-  if (!req.path.startsWith('/api') || req.path.startsWith('/api/auth/')) return next();
+  if (req.path.toLowerCase().startsWith('/auth/')) return next();
   if (istAngemeldet(req)) return next();
   res.status(401).json({ error: 'Nicht angemeldet' });
 }
@@ -113,6 +120,10 @@ router.post('/login', (req, res) => {
   }
   const ip = req.ip || 'unbekannt';
   const jetzt = Date.now();
+  // Abgelaufene Einträge entfernen, damit die Liste nicht unbegrenzt wächst
+  if (fehlversuche.size > 1000) {
+    for (const [k, v] of fehlversuche) if (jetzt - v.seit >= FENSTER_MS) fehlversuche.delete(k);
+  }
   const f = fehlversuche.get(ip);
   if (f && jetzt - f.seit < FENSTER_MS && f.anzahl >= 10) {
     res.status(429).json({ error: 'Zu viele Versuche, bitte später nochmals' });

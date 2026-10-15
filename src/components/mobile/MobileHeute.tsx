@@ -140,7 +140,7 @@ export function MobileHeute({ entries, employer, employers, onEdit, onDelete, on
               className="w-full bg-white rounded-xl border-2 border-dashed border-gray-300 p-6 text-center text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors"
             >
               <Plus className="w-6 h-6 mx-auto mb-2" />
-              <div className="text-sm">Noch keine Einträge — Tippen für Neuen</div>
+              <div className="text-sm">Noch keine Einträge. Tippen für einen neuen.</div>
             </button>
           ) : (
             <ul className="space-y-2">

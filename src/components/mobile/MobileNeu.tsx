@@ -257,7 +257,7 @@ export function MobileNeu({ employers, selectedEmployer, editEntry, onSave, onCa
           </Section>
         )}
 
-        {/* Spacer fuer scroll */}
+        {/* Spacer für scroll */}
         <div className="h-4" />
       </div>
     </form>

@@ -28,6 +28,7 @@ export function MobileApp() {
   const [tab, setTabState] = useState<MobileTab>(loadPersistedTab);
   const [selectedEmployer, setSelectedEmployerState] = useState(loadPersistedEmployer);
   const [employers, setEmployers] = useState<Employer[]>([]);
+  const [employersGeladen, setEmployersGeladen] = useState(false);
   const [editEntry, setEditEntry] = useState<TimeEntry | null>(null);
   const { entries, loading, error, clearError, add, update, remove } = useEntries();
 
@@ -35,6 +36,7 @@ export function MobileApp() {
     fetchEmployers()
       .then((liste) => {
         setEmployers(liste);
+        setEmployersGeladen(true);
         setSelectedEmployerState((bisher) => gueltigeAuswahl(bisher, liste));
       })
       .catch((err) => console.error('Arbeitgeber laden:', err));
@@ -63,7 +65,7 @@ export function MobileApp() {
       // rechnungsnummer wird von der Abrechnungs-Seite verwaltet -> erhalten
       entry.rechnungsnummer = editEntry.rechnungsnummer;
       if (entry.abgerechnet !== editEntry.abgerechnet) {
-        // abgerechnet wurde im Formular per Dropdown geaendert -> bezahlt mitfuehren
+        // abgerechnet wurde im Formular per Dropdown geändert -> bezahlt mitführen
         if (entry.abgerechnet) {
           entry.bezahlt = true;
           entry.bezahltVon = editEntry.bezahltVon || entry.fuerWen;
@@ -74,7 +76,7 @@ export function MobileApp() {
           entry.bezahltVon = undefined;
         }
       } else {
-        // unveraendert -> Abrechnungs-/Zahlungsfelder unangetastet uebernehmen
+        // unverändert -> Abrechnungs-/Zahlungsfelder unangetastet übernehmen
         entry.bezahlt = editEntry.bezahlt;
         entry.bezahltAm = editEntry.bezahltAm;
         entry.bezahltVon = editEntry.bezahltVon;
@@ -119,8 +121,17 @@ export function MobileApp() {
         </div>
       )}
 
-      {/* Content (Bottom-Padding fuer Tab-Nav) */}
+      {/* Content (Bottom-Padding für Tab-Nav) */}
       <main className="flex-1 pb-20">
+        {employersGeladen && employers.length === 0 && (
+          <div className="m-4 p-4 bg-white rounded-xl border border-gray-200">
+            <div className="font-semibold text-gray-900">Willkommen bei PickTick</div>
+            <p className="text-sm text-gray-600 mt-1">
+              Lege zuerst am Computer unter «Arbeitgeber» deine Schule an und passe unter «Einstellungen» die Leistungen an.
+              Danach kannst du hier unterwegs erfassen.
+            </p>
+          </div>
+        )}
         {tab === 'heute' && (
           <MobileHeute
             entries={employerEntries}

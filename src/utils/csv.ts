@@ -11,6 +11,7 @@ interface CsvRowCurrent {
   Dauer: string;
   abgerechnet: string;
   'Dauer in Minuten mit Formel checked': string;
+  'Dauer in Minuten': string;
 }
 
 interface CsvRowAll extends CsvRowCurrent {
@@ -27,6 +28,10 @@ function parseDatumField(datum: string): {
   // Format: "DD/MM/YYYY HH:MM (MEZ) → HH:MM" or "DD/MM/YYYY HH:MM (MEZ) → DD/MM/YYYY HH:MM"
   const fallback = { date: '', startZeit: '', endZeit: '' };
   if (!datum) return fallback;
+
+  // Nur Datum ohne Zeit, wie es der Export für Einträge ohne Uhrzeit schreibt: "DD/MM/YYYY"
+  const nurDatum = datum.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (nurDatum) return { date: `${nurDatum[3]}-${nurDatum[2]}-${nurDatum[1]}`, startZeit: '', endZeit: '' };
 
   try {
     const parts = datum.split('→').map((s) => s.trim());
@@ -74,13 +79,9 @@ function parseDauerMinuten(value: string): number {
   return isNaN(num) ? 0 : num;
 }
 
-export function importCsv(file: File): Promise<TimeEntry[]> {
-  return new Promise((resolve, reject) => {
-    Papa.parse<CsvRowAll>(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete(results) {
-        const entries: TimeEntry[] = results.data
+/** Wandelt CSV-Zeilen (Export von PickTick oder das ältere Notion-Format) in Einträge. */
+export function zeilenZuEintraegen(zeilen: CsvRowAll[]): TimeEntry[] {
+  return zeilen
           .filter(
             (row) =>
               row['Beschreibung der Tätigkeit'] &&
@@ -102,7 +103,7 @@ export function importCsv(file: File): Promise<TimeEntry[]> {
               startZeit,
               endZeit,
               dauerMinuten: parseDauerMinuten(
-                row['Dauer in Minuten mit Formel checked'] || '0'
+                row['Dauer in Minuten'] || row['Dauer in Minuten mit Formel checked'] || '0'
               ),
               abgerechnet:
                 (row.abgerechnet || '').trim().toLowerCase() === 'yes',
@@ -110,7 +111,15 @@ export function importCsv(file: File): Promise<TimeEntry[]> {
               createdAt: new Date().toISOString(),
             };
           });
-        resolve(entries);
+}
+
+export function importCsv(file: File): Promise<TimeEntry[]> {
+  return new Promise((resolve, reject) => {
+    Papa.parse<CsvRowAll>(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete(results) {
+        resolve(zeilenZuEintraegen(results.data));
       },
       error(err) {
         reject(err);

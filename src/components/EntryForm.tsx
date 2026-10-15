@@ -45,8 +45,8 @@ export function EntryForm({ onSave, onCancel, editEntry, employers, initialDate 
       setRolleVorgeschlagen(false);
       setLeistung(editEntry.leistung);
       setDatum(editEntry.datum);
-      setStartZeit(editEntry.startZeit);
-      setEndZeit(editEntry.endZeit);
+      setStartZeit(editEntry.startZeit ?? '');
+      setEndZeit(editEntry.endZeit ?? '');
       setDauerMinuten(editEntry.dauerMinuten);
       setKilometer(editEntry.kilometer || 0);
       setAbgerechnet(editEntry.abgerechnet);

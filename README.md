@@ -81,6 +81,14 @@ Für den Zugriff von unterwegs gehört PickTick hinter einen Reverse Proxy mit H
 Beispiel Caddy) oder in ein privates Netz wie Tailscale. Hinter einem Proxy
 `PICKTICK_HINTER_PROXY=1` setzen.
 
+### Von einer älteren Fassung aktualisieren
+
+Bestehende Daten bleiben beim Update unverändert. Neu sind die Einstellungen: Absender und
+Bank für Rechnungen sowie die Leistungsliste mit Rollen. Nach dem Update einmal unter
+«Einstellungen» nachtragen, sonst sind Rechnungen ohne Absender, und eigene Leistungen
+haben noch keinen Rollenvorschlag. Eine monatliche Pauschale wird neu beim Arbeitgeber
+eingetragen.
+
 ### Ohne Docker
 
 ```bash

@@ -1,4 +1,4 @@
 import type { TimeEntry } from '../types';
 
-// Echte Einträge liegen nur auf der NAS (data/entries.json), nicht im Repo.
+// Eine frische Installation startet leer; die Einträge liegen im Datenordner.
 export const SEED_DATA: TimeEntry[] = [];

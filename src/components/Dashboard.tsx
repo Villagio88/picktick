@@ -119,7 +119,7 @@ export function Dashboard({ entries, allEntries, onNewEntry, onNavigate, employe
     });
   }, [schuljahrMonthly, currentMonthIdx, SOLL_MONAT, currentMonthFraction, employerHasSoll, pauschaleProMonat]);
 
-  // Aktuelle Werte — aktuelle Periode: aktueller Monat; alte Periode: letzter Monat (Jahresabschluss)
+  // Aktuelle Werte. Aktuelle Periode: aktueller Monat; alte Periode: letzter Monat (Jahresabschluss)
   const referenzIdx = isCurrentPeriode ? currentMonthIdx : monthlyData.length - 1;
   const cm = monthlyData[referenzIdx];
   const monatTotal = cm?.total ?? 0;
@@ -596,7 +596,7 @@ export function Dashboard({ entries, allEntries, onNewEntry, onNavigate, employe
         </div>
 
         {(() => {
-          const BAR_AREA = 192; // px – feste Höhe für den Balkenbereich
+          const BAR_AREA = 192; // px, feste Höhe für den Balkenbereich
           const maxVal = Math.max(
             ...monthlyData.map((x) => x.total),
             showSoll ? SOLL_MONAT * 1.1 : 1

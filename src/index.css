@@ -25,7 +25,7 @@ body {
   transition: box-shadow 0.15s ease-in-out;
 }
 
-/* iOS Safari: date/time/number inputs gleiche Hoehe erzwingen (sonst rendert iOS leere time-inputs verkleinert) */
+/* iOS Safari: date/time/number inputs gleiche Höhe erzwingen (sonst rendert iOS leere time-inputs verkleinert) */
 input[type="date"],
 input[type="time"],
 input[type="datetime-local"],

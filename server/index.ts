@@ -13,6 +13,7 @@ import settingsRouter from './routes/settings.js';
 import authRouter, { schuetzeApi, anmeldungNoetig } from './auth.js';
 
 const app = express();
+app.disable('x-powered-by');
 const PORT = Number(process.env.PORT) || 3001;
 const HOST = process.env.HOST || '0.0.0.0';
 const DIST_DIR = path.resolve(import.meta.dirname, '..', 'dist');
@@ -56,7 +57,7 @@ setInterval(() => {
 
 // --- Anmeldung ---
 app.use('/api/auth', authRouter);
-app.use(schuetzeApi);
+app.use('/api', schuetzeApi);
 if (!anmeldungNoetig) {
   console.warn('[auth] PICKTICK_PASSWORT ist nicht gesetzt: PickTick läuft ohne Anmeldung. Nur im geschützten eigenen Netz so betreiben.');
 }
@@ -71,7 +72,7 @@ app.use('/api/settings', settingsRouter);
 // --- Frontend (Production): serve built SPA from dist/ ---
 if (SERVE_FRONTEND) {
   app.use(express.static(DIST_DIR));
-  // SPA-Fallback fuer alle nicht-API GET-Requests
+  // SPA-Fallback für alle nicht-API GET-Requests
   app.use((req: Request, res: Response, next: NextFunction) => {
     if (req.method !== 'GET' || req.path.startsWith('/api')) return next();
     res.sendFile(path.join(DIST_DIR, 'index.html'));

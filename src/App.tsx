@@ -113,7 +113,7 @@ function DesktopApp() {
   );
 
   const modus = selectedEmp?.periodeModus || 'schuljahr';
-  // In der Übersicht und im Alle-Modus gibt es keinen einzelnen Arbeitgeber —
+  // In der Übersicht und im Alle-Modus gibt es keinen einzelnen Arbeitgeber;
   // dort gilt für Auswahl, Optionen und Banner einheitlich der Schuljahr-Modus.
   const uiModus = view === 'uebersicht' || isAlleMode ? 'schuljahr' : modus;
   const currentPeriodeKey = getPeriodeKey(todayISO(), uiModus).key;
@@ -150,7 +150,7 @@ function DesktopApp() {
       // rechnungsnummer wird von der Abrechnungs-Seite verwaltet -> erhalten
       entry.rechnungsnummer = editEntry.rechnungsnummer;
       if (entry.abgerechnet !== editEntry.abgerechnet) {
-        // abgerechnet wurde im Formular per Dropdown geaendert -> bezahlt mitfuehren
+        // abgerechnet wurde im Formular per Dropdown geändert -> bezahlt mitführen
         if (entry.abgerechnet) {
           entry.bezahlt = true;
           entry.bezahltVon = editEntry.bezahltVon || entry.fuerWen;
@@ -161,7 +161,7 @@ function DesktopApp() {
           entry.bezahltVon = undefined;
         }
       } else {
-        // unveraendert -> Abrechnungs-/Zahlungsfelder unangetastet uebernehmen
+        // unverändert -> Abrechnungs-/Zahlungsfelder unangetastet übernehmen
         entry.bezahlt = editEntry.bezahlt;
         entry.bezahltAm = editEntry.bezahltAm;
         entry.bezahltVon = editEntry.bezahltVon;
