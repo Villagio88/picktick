@@ -71,7 +71,7 @@ export function ImportModal({
                 CSV-Datei hierher ziehen oder klicken
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                Liest den CSV-Export von PickTick
+                Liest den CSV-Export von PickTick (Zusammenführen legt Einträge neu an)
               </p>
             </div>
             <input

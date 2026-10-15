@@ -12,6 +12,10 @@ interface CsvRowCurrent {
   abgerechnet: string;
   'Dauer in Minuten mit Formel checked': string;
   'Dauer in Minuten': string;
+  bezahlt: string;
+  'bezahlt am': string;
+  'bezahlt von': string;
+  Kilometer: string;
 }
 
 interface CsvRowAll extends CsvRowCurrent {
@@ -108,6 +112,10 @@ export function zeilenZuEintraegen(zeilen: CsvRowAll[]): TimeEntry[] {
               abgerechnet:
                 (row.abgerechnet || '').trim().toLowerCase() === 'yes',
               rechnungsnummer: (row.Rechnungsnummer || '').trim(),
+              bezahlt: row.bezahlt ? row.bezahlt.trim().toLowerCase() === 'yes' : undefined,
+              bezahltAm: (row['bezahlt am'] || '').trim() || undefined,
+              bezahltVon: (row['bezahlt von'] || '').trim() || undefined,
+              kilometer: parseFloat(row.Kilometer) > 0 ? parseFloat(row.Kilometer) : undefined,
               createdAt: new Date().toISOString(),
             };
           });
@@ -165,6 +173,10 @@ export function exportCsv(entries: TimeEntry[]): string {
       Monat: monatNamen[month] || '',
       Rechnungsnummer: e.rechnungsnummer,
       abgerechnet: e.abgerechnet ? 'Yes' : 'No',
+      bezahlt: e.bezahlt ? 'Yes' : 'No',
+      'bezahlt am': e.bezahltAm ?? '',
+      'bezahlt von': e.bezahltVon ?? '',
+      Kilometer: e.kilometer ?? '',
       'für wen': e.fuerWen,
     };
   });

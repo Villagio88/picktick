@@ -25,6 +25,14 @@ describe('CSV Export und Import', () => {
     });
   });
 
+  it('überträgt Zahlungsstatus und Kilometer', () => {
+    const [r] = hinUndZurueck([e({ bezahlt: true, bezahltAm: '2026-09-30', bezahltVon: 'Schule', kilometer: 12 })]);
+    expect(r).toMatchObject({ bezahlt: true, bezahltAm: '2026-09-30', bezahltVon: 'Schule', kilometer: 12 });
+    const [o] = hinUndZurueck([e({ abgerechnet: false, rechnungsnummer: '' })]);
+    expect(o.bezahlt).toBe(false);
+    expect(o.kilometer).toBeUndefined();
+  });
+
   it('behält Datum und Dauer bei Einträgen ohne Uhrzeit', () => {
     const [r] = hinUndZurueck([e({ startZeit: '', endZeit: '', dauerMinuten: 45 })]);
     expect(r.datum).toBe('2026-09-14');
