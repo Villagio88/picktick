@@ -1,0 +1,21 @@
+services:
+  picktick:
+    build: .
+    image: picktick:latest
+    container_name: picktick
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+      HOST: "0.0.0.0"
+      TZ: "Europe/Zurich"
+      # Passwort für die Anmeldung. Ohne Passwort läuft PickTick offen, nur im geschützten Netz so betreiben.
+      PICKTICK_PASSWORT: "${PICKTICK_PASSWORT:?Bitte PICKTICK_PASSWORT in der Datei .env setzen}"
+      # Optional: Schlüssel für Skripte und Kurzbefehle (Authorization: Bearer <schlüssel>)
+      PICKTICK_API_SCHLUESSEL: "${PICKTICK_API_SCHLUESSEL:-}"
+      # Auf 1 setzen, wenn PickTick hinter einem Reverse Proxy mit HTTPS läuft
+      PICKTICK_HINTER_PROXY: "${PICKTICK_HINTER_PROXY:-0}"
+    volumes:
+      - ./daten:/app/server/data
