@@ -146,7 +146,7 @@ export function AbrechnungPage({ entries, employer, employers, onMarkAbgerechnet
     if (selectedEntries.length === 0) return;
     const was = isUebersicht ? 'eine Stundenübersicht' : 'eine Rechnung mit neuer Nummer';
     const ok = window.confirm(
-      `${selectedEntries.length} Einträge (${formatStunden(totalSelectedMin)} Std) werden als abgerechnet markiert und ${was} wird erstellt. Fortfahren?`,
+      `${selectedEntries.length === 1 ? '1 Eintrag' : `${selectedEntries.length} Einträge`} (${formatStunden(totalSelectedMin)} Std) ${selectedEntries.length === 1 ? 'wird' : 'werden'} als abgerechnet markiert und ${was} wird erstellt. Fortfahren?`,
     );
     if (!ok) return;
     try {

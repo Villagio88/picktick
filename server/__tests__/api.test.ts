@@ -130,3 +130,12 @@ describe('Beschädigte Daten', () => {
     expect(sicherung.body['entries.json.roh']).toBe('{kaputt');
   });
 });
+
+describe('Herkunft ohne Proxy', () => {
+  it('glaubt X-Forwarded-Host nicht, wenn kein Proxy eingestellt ist', async () => {
+    const r = await request(app).post('/api/entries').set(voll)
+      .set('Host', 'picktick:3001').set('X-Forwarded-Host', 'boese.example').set('Origin', 'https://boese.example')
+      .send(eintrag({ id: 'h1' }));
+    expect(r.status).toBe(403);
+  });
+});

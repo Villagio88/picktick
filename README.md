@@ -162,7 +162,7 @@ Datenträger. Eine zweite Kopie an einem anderen Ort ist Pflicht:
 
 ```bash
 docker run --rm --user "$(id -u):$(id -g)" -v picktick_picktick-daten:/daten:ro -v "$PWD":/ziel \
-  node:24-bookworm-slim tar czf /ziel/picktick-daten.tgz -C /daten .
+  node:24-bookworm-slim tar czf /ziel/picktick-daten.tgz --exclude='./.sitzung-*' -C /daten .
 ```
 
 Wiederherstellen aus einer Gesamtsicherung:

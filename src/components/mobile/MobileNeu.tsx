@@ -68,8 +68,9 @@ export function MobileNeu({ employers, selectedEmployer, editEntry, onSave, onCa
       kategorie,
       leistung,
       datum,
-      startZeit: manualDauer ? '' : startZeit,
-      endZeit: manualDauer ? '' : endZeit,
+      // Zeiten bleiben auch bei manueller Dauer erhalten (etwa mit Pause), wie am Computer
+      startZeit,
+      endZeit,
       dauerMinuten,
       kilometer: kilometer > 0 ? kilometer : undefined,
       abgerechnet,
