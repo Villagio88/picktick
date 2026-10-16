@@ -81,7 +81,10 @@ docker compose up -d --build
 ```
 
 Danach läuft PickTick auf `http://localhost:3001`, nur von diesem Rechner aus erreichbar.
-Die Daten liegen im Docker-Volume `picktick-daten` als einfache JSON-Dateien.
+Die Daten liegen als einfache JSON-Dateien in einem Docker-Volume, das Compose
+`<ordnername>_picktick-daten` nennt (beim Ordner `picktick` also `picktick_picktick-daten`).
+Statt eines Volumes geht auch ein eigener Ordner; der muss dann dem Benutzer mit der
+UID 1000 gehören, weil PickTick im Container nicht als root läuft.
 
 Erste Schritte in der App:
 
@@ -107,9 +110,11 @@ Alternativ in einem privaten Netz wie Tailscale betreiben.
 
 | Variable | Bedeutung |
 |---|---|
-| `PICKTICK_PASSWORT` | Passwort für die Anmeldung, mindestens 12 Zeichen. Ohne Passwort lauscht PickTick nur auf `127.0.0.1`. |
-| `PICKTICK_API_SCHLUESSEL` | Optional. Schlüssel für Skripte, als `Authorization: Bearer <schlüssel>`. |
+| `PICKTICK_PASSWORT` | Passwort für die Anmeldung, mindestens 12 Zeichen. Ohne Passwort startet PickTick nur lokal (`127.0.0.1`); im Docker-Image verweigert es dann den Start. |
+| `PICKTICK_API_SCHLUESSEL` | Optional. Schlüssel mit vollem Zugriff für Skripte, als `Authorization: Bearer <schlüssel>`. |
+| `PICKTICK_ERFASSEN_SCHLUESSEL` | Optional. Schlüssel, der nur lesen und neue Einträge anlegen darf. Für Kurzbefehle auf dem Handy. |
 | `PICKTICK_HINTER_PROXY` | `1`, wenn ein Reverse Proxy mit HTTPS davor steht. |
+| `PICKTICK_ORIGIN` | Optional. Eigene Adresse wie `https://zeit.meine-domain.ch`, falls ein Proxy den Host nicht durchreicht (nginx ohne `proxy_set_header Host $host`). |
 | `PICKTICK_DATEN` | Datenordner (im Image `/app/daten`). |
 | `PICKTICK_OHNE_ANMELDUNG` | `1` erlaubt den Betrieb ohne Passwort im Netz. Nur in einem geschützten Netz. |
 | `PORT`, `HOST` | Port und Adresse des Servers, Vorgabe 3001 und 0.0.0.0. |
@@ -156,7 +161,7 @@ Datenträger. Eine zweite Kopie an einem anderen Ort ist Pflicht:
 - **Auf dem Server**, als Archiv des ganzen Volumes:
 
 ```bash
-docker run --rm -v picktick_picktick-daten:/daten -v "$PWD":/ziel \
+docker run --rm --user "$(id -u):$(id -g)" -v picktick_picktick-daten:/daten:ro -v "$PWD":/ziel \
   node:24-bookworm-slim tar czf /ziel/picktick-daten.tgz -C /daten .
 ```
 
@@ -176,12 +181,13 @@ ausführt.
 
 ## Für Skripte: die API
 
-Mit einem API-Schlüssel lassen sich Einträge von aussen anlegen, etwa aus einem Kurzbefehl
-oder einem Skript:
+Mit einem Schlüssel lassen sich Einträge von aussen anlegen, etwa aus einem Kurzbefehl oder
+einem Skript. Für ein Handy den Erfassen-Schlüssel nehmen: Er darf lesen und neue Einträge
+anlegen, aber nichts ändern oder löschen.
 
 ```bash
 curl -X POST https://zeit.meine-domain.ch/api/entries \
-  -H "Authorization: Bearer $PICKTICK_API_SCHLUESSEL" \
+  -H "Authorization: Bearer $PICKTICK_ERFASSEN_SCHLUESSEL" \
   -H "Content-Type: application/json" \
   -d '{"id":"<uuid>","beschreibung":"Drucker eingerichtet","fuerWen":"Schule",
        "kategorie":"technischer Support","leistung":"Drucker","datum":"2026-10-16",

@@ -16,14 +16,18 @@ interface Props {
   editEntry?: TimeEntry | null;
   employers: Employer[];
   initialDate?: string;
+  /** Arbeitgeber, der für neue Einträge vorgewählt ist (in der Seitenleiste gewählt) */
+  vorgabeArbeitgeber?: string;
 }
 
-export function EntryForm({ onSave, onCancel, editEntry, employers, initialDate }: Props) {
+export function EntryForm({ onSave, onCancel, editEntry, employers, initialDate, vorgabeArbeitgeber }: Props) {
   // Startwerte aus dem bearbeiteten Eintrag; App setzt einen key je Eintrag, damit das
   // Formular beim Wechsel neu startet statt Werte per Effect nachzuziehen.
   const [beschreibung, setBeschreibung] = useState(editEntry?.beschreibung ?? '');
   const [fuerWen, setFuerWen] = useState(
-    () => editEntry?.fuerWen ?? (employers.find((e) => e.hasSoll) ?? employers[0])?.name ?? '',
+    () => editEntry?.fuerWen
+      ?? (employers.some((e) => e.name === vorgabeArbeitgeber) ? vorgabeArbeitgeber : undefined)
+      ?? (employers.find((e) => e.hasSoll) ?? employers[0])?.name ?? '',
   );
   const [kategorie, setKategorie] = useState(editEntry?.kategorie ?? '');
   // true, solange die Rolle nur aus den Leistungen vorgeschlagen ist
@@ -34,7 +38,10 @@ export function EntryForm({ onSave, onCancel, editEntry, employers, initialDate 
   const [startZeit, setStartZeit] = useState(editEntry ? editEntry.startZeit ?? '' : currentTime());
   const [endZeit, setEndZeit] = useState(editEntry?.endZeit ?? '');
   const [dauerEingabe, setDauerMinuten] = useState(editEntry?.dauerMinuten ?? 0);
-  const [manualDauer, setManualDauer] = useState(editEntry ? !(editEntry.startZeit && editEntry.endZeit) : false);
+  // Manuell, wenn keine Zeiten da sind oder die gespeicherte Dauer nicht zu den Zeiten passt
+  const [manualDauer, setManualDauer] = useState(() => !!editEntry && (
+    !(editEntry.startZeit && editEntry.endZeit)
+    || berechneMinuten(editEntry.startZeit, editEntry.endZeit) !== editEntry.dauerMinuten));
   const [kilometer, setKilometer] = useState(editEntry?.kilometer || 0);
   const [abgerechnet, setAbgerechnet] = useState(editEntry?.abgerechnet ?? false);
   const [rechnungsnummer] = useState('');
@@ -73,6 +80,8 @@ export function EntryForm({ onSave, onCancel, editEntry, employers, initialDate 
       kategorie,
       leistung,
       datum,
+      // Zeiten bleiben auch bei manueller Dauer (etwa mit Pause); beim nächsten Öffnen
+      // erkennt das Formular die abweichende Dauer und rechnet sie nicht still um
       startZeit,
       endZeit,
       dauerMinuten,

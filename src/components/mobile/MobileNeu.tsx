@@ -47,9 +47,10 @@ export function MobileNeu({ employers, selectedEmployer, editEntry, onSave, onCa
   const [startZeit, setStartZeit] = useState(editEntry?.startZeit || currentTime());
   const [endZeit, setEndZeit] = useState(editEntry?.endZeit || '');
   const [dauerEingabe, setDauerMinuten] = useState(editEntry?.dauerMinuten || 0);
-  const [manualDauer, setManualDauer] = useState(
-    editEntry ? !(editEntry.startZeit && editEntry.endZeit) : false
-  );
+  // Manuell, wenn keine Zeiten da sind oder die gespeicherte Dauer nicht zu den Zeiten passt
+  const [manualDauer, setManualDauer] = useState(() => !!editEntry && (
+    !(editEntry.startZeit && editEntry.endZeit)
+    || berechneMinuten(editEntry.startZeit, editEntry.endZeit) !== editEntry.dauerMinuten));
   const [kilometer, setKilometer] = useState(editEntry?.kilometer || 0);
   const [abgerechnet, setAbgerechnet] = useState(editEntry?.abgerechnet ?? false);
 

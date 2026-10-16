@@ -4,6 +4,11 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 3
+    # Grosse Versionssprünge bewusst und von Hand, nicht als Flut von Vorschlägen
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
     groups:
       abhaengigkeiten:
         patterns: ['*']
@@ -16,3 +21,6 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    groups:
+      aktionen:
+        patterns: ['*']

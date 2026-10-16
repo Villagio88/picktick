@@ -25,7 +25,7 @@ router.put('/:schuljahrLabel', (req, res) => {
       res.status(400).json({ error: 'lektionen must be a number between 0 and 100' });
       return;
     }
-    const label = decodeURIComponent(req.params.schuljahrLabel);
+    const label = req.params.schuljahrLabel;
     if (label.length > 200) {
       res.status(400).json({ error: 'schuljahrLabel too long' });
       return;

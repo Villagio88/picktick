@@ -21,6 +21,7 @@ import { getPeriodeKey, periodeKeyToRange, periodeKeyToLabel, getPeriodeOptions,
 import type { PensumMap } from './utils/pensum';
 import { PeriodeBanner } from './components/PeriodeBanner';
 import { gueltigeAuswahl } from './utils/arbeitgeberWahl';
+import { zumSpeichern } from './utils/eintragSpeichern';
 
 const VIEW_KEY = 'picktick-ansicht';
 const EMPLOYER_KEY = 'picktick-arbeitgeber';
@@ -146,38 +147,9 @@ function DesktopApp() {
   }
 
   function handleSave(entry: TimeEntry) {
-    if (editEntry) {
-      // rechnungsnummer wird von der Abrechnungs-Seite verwaltet -> erhalten
-      entry.rechnungsnummer = editEntry.rechnungsnummer;
-      if (entry.abgerechnet !== editEntry.abgerechnet) {
-        // abgerechnet wurde im Formular per Dropdown geändert -> bezahlt mitführen
-        if (entry.abgerechnet) {
-          entry.bezahlt = true;
-          entry.bezahltVon = editEntry.bezahltVon || entry.fuerWen;
-          entry.bezahltAm = editEntry.bezahltAm || entry.datum;
-        } else {
-          entry.bezahlt = false;
-          entry.bezahltAm = undefined;
-          entry.bezahltVon = undefined;
-        }
-      } else {
-        // unverändert -> Abrechnungs-/Zahlungsfelder unangetastet übernehmen
-        entry.bezahlt = editEntry.bezahlt;
-        entry.bezahltAm = editEntry.bezahltAm;
-        entry.bezahltVon = editEntry.bezahltVon;
-      }
-      update(entry);
-    } else {
-      // Auto-bill for employers with autoAbgerechnet (abgerechnet impliziert bezahlt)
-      const emp = employers.find(e => e.name === entry.fuerWen);
-      if (emp?.autoAbgerechnet) {
-        entry.abgerechnet = true;
-        entry.bezahlt = true;
-        entry.bezahltVon = entry.fuerWen;
-        entry.bezahltAm = entry.datum;
-      }
-      add(entry);
-    }
+    const fertig = zumSpeichern(entry, editEntry, employers);
+    if (editEntry) update(fertig);
+    else add(fertig);
     setEditEntry(null);
     setShowEntryForm(false);
   }
@@ -319,6 +291,7 @@ function DesktopApp() {
           editEntry={editEntry}
           employers={employers}
           initialDate={initialDate}
+          vorgabeArbeitgeber={isAlleMode ? undefined : selectedEmployer}
         />
       )}
 

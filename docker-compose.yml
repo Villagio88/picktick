@@ -12,8 +12,12 @@ services:
       TZ: "Europe/Zurich"
       # Pflicht, mindestens 12 Zeichen
       PICKTICK_PASSWORT: "${PICKTICK_PASSWORT:?Bitte PICKTICK_PASSWORT in der Datei .env setzen}"
-      # Optional: Schlüssel für Skripte (Authorization: Bearer <schlüssel>)
+      # Optional: Schlüssel für Skripte mit vollem Zugriff (Authorization: Bearer <schlüssel>)
       PICKTICK_API_SCHLUESSEL: "${PICKTICK_API_SCHLUESSEL:-}"
+      # Optional: Schlüssel nur zum Erfassen, für Kurzbefehle auf dem Handy
+      PICKTICK_ERFASSEN_SCHLUESSEL: "${PICKTICK_ERFASSEN_SCHLUESSEL:-}"
+      # Optional: eigene Adresse, falls ein Proxy den Host nicht durchreicht
+      PICKTICK_ORIGIN: "${PICKTICK_ORIGIN:-}"
       # 1, wenn PickTick hinter einem Reverse Proxy mit HTTPS läuft
       PICKTICK_HINTER_PROXY: "${PICKTICK_HINTER_PROXY:-0}"
     volumes:

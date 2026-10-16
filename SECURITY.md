@@ -18,7 +18,8 @@ Sicherheitskorrekturen gibt es für die jeweils neueste Fassung.
 - Bremse gegen das Durchprobieren von Passwörtern (10 Fehlversuche je Adresse in 15 Minuten).
 - Schreibende Anfragen aus fremden Seiten werden abgewiesen (Origin-Prüfung), dazu
   Content-Security-Policy und weitere Sicherheitsheader.
-- Ohne Passwort lauscht PickTick nur auf `127.0.0.1`.
+- Ohne Passwort startet PickTick nur lokal auf `127.0.0.1`; im Docker-Image verweigert es den Start.
+- Ein eigener Schlüssel nur zum Erfassen, damit ein verlorenes Handy keine Daten ändern oder löschen kann.
 - Das Docker-Image läuft nicht als root.
 - Beschädigte Datendateien werden nie still durch leere Daten ersetzt.
 

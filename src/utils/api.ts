@@ -8,7 +8,12 @@ async function pruefe(res: Response, was: string): Promise<void> {
     window.dispatchEvent(new Event(ABGEMELDET_EVENT));
     throw new Error('Nicht angemeldet');
   }
-  if (!res.ok) throw new Error(`${was}: ${res.status}`);
+  if (!res.ok) {
+    // Meldung des Servers zeigen, falls vorhanden (etwa bei beschädigten Daten)
+    let meldung = '';
+    try { meldung = (await res.json())?.error ?? ''; } catch { /* keine JSON-Antwort */ }
+    throw new Error(meldung ? `${meldung} (${res.status})` : `${was}: ${res.status}`);
+  }
 }
 
 async function get<T>(url: string): Promise<T> {

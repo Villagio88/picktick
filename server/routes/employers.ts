@@ -2,25 +2,7 @@ import { Router } from 'express';
 import { sendeFehler } from '../fehler.js';
 import { readJSON, writeJSON } from '../store.js';
 
-interface Employer {
-  name: string;
-  hasSoll: boolean;
-  stundenlohn?: number;
-  sollStundenJahr?: number;
-  vollzeitStunden?: number;
-  pensum?: number;
-  lektionen?: number;
-  lektionenVollzeit?: number;
-  adresse?: string;
-  ansprechpartner?: string;
-  email?: string;
-  telefon?: string;
-  autoAbgerechnet?: boolean;
-  farbe?: string;
-  periodeModus?: 'schuljahr' | 'kalenderjahr';
-  abrechnungsModus?: 'rechnung' | 'stundenuebersicht';
-  pauschaleStundenProMonat?: number;
-}
+import type { Employer } from '../../src/types/index.js';
 
 // Allowed keys for employer updates (whitelist to prevent prototype pollution)
 const ALLOWED_EMPLOYER_KEYS = new Set<string>([
@@ -82,7 +64,7 @@ router.get('/', (_req, res) => {
 router.get('/:name', (req, res) => {
   try {
     const employers = readJSON<Employer[]>('employers.json', []);
-    const emp = employers.find((e) => e.name === decodeURIComponent(req.params.name));
+    const emp = employers.find((e) => e.name === req.params.name);
     if (!emp) {
       res.status(404).json({ error: 'Not found' });
       return;
@@ -126,7 +108,7 @@ router.put('/:name', (req, res) => {
       return;
     }
     const employers = readJSON<Employer[]>('employers.json', []);
-    const emp = employers.find((e) => e.name === decodeURIComponent(req.params.name));
+    const emp = employers.find((e) => e.name === req.params.name);
     if (emp) {
       // Safe assign: only sanitized keys
       for (const [key, value] of Object.entries(updates)) {
@@ -144,7 +126,7 @@ router.put('/:name', (req, res) => {
 router.delete('/:name', (req, res) => {
   try {
     let employers = readJSON<Employer[]>('employers.json', []);
-    employers = employers.filter((e) => e.name !== decodeURIComponent(req.params.name));
+    employers = employers.filter((e) => e.name !== req.params.name);
     writeJSON('employers.json', employers);
     res.json(employers);
   } catch (err) {

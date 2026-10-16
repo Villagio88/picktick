@@ -105,9 +105,9 @@ export function zeilenZuEintraegen(zeilen: CsvRowAll[]): TimeEntry[] {
               beschreibung: ohneFormelschutz((
                 row['Beschreibung der Tätigkeit'] || ''
               ).trim()),
-              fuerWen: (row['für wen'] || '').trim(),
-              kategorie: (row.Kategorie || row['Kategorie'] || '').trim(),
-              leistung: (row.Leistung || row['Leistung'] || '').trim(),
+              fuerWen: ohneFormelschutz((row['für wen'] || '').trim()),
+              kategorie: ohneFormelschutz((row.Kategorie || row['Kategorie'] || '').trim()),
+              leistung: ohneFormelschutz((row.Leistung || row['Leistung'] || '').trim()),
               datum: date,
               startZeit,
               endZeit,
@@ -116,10 +116,10 @@ export function zeilenZuEintraegen(zeilen: CsvRowAll[]): TimeEntry[] {
               ),
               abgerechnet:
                 (row.abgerechnet || '').trim().toLowerCase() === 'yes',
-              rechnungsnummer: (row.Rechnungsnummer || '').trim(),
+              rechnungsnummer: ohneFormelschutz((row.Rechnungsnummer || '').trim()),
               bezahlt: row.bezahlt ? row.bezahlt.trim().toLowerCase() === 'yes' : undefined,
               bezahltAm: (row['bezahlt am'] || '').trim() || undefined,
-              bezahltVon: (row['bezahlt von'] || '').trim() || undefined,
+              bezahltVon: ohneFormelschutz((row['bezahlt von'] || '').trim()) || undefined,
               kilometer: parseFloat(row.Kilometer) > 0 ? parseFloat(row.Kilometer) : undefined,
               createdAt: new Date().toISOString(),
             };

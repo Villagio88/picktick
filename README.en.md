@@ -80,7 +80,8 @@ docker compose up -d --build
 ```
 
 PickTick then runs on `http://localhost:3001`, reachable from this machine only. Data is
-stored as plain JSON files in the Docker volume `picktick-daten`.
+stored as plain JSON files in a Docker volume that Compose names
+`<folder>_picktick-daten` (for the folder `picktick`: `picktick_picktick-daten`).
 
 To reach it from outside, never expose it without HTTPS. The easiest way is the bundled
 Caddy setup, which obtains a certificate automatically (a domain must point to the server):

@@ -14,7 +14,8 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
-        changeOrigin: true,
+        // Host durchreichen, damit die Herkunftsprüfung des Servers passt
+        changeOrigin: false,
       },
     },
   },

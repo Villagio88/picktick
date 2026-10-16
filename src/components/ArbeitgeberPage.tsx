@@ -481,7 +481,7 @@ export function ArbeitgeberPage({ employers, onEmployersChange, entries, pensumM
               type="email"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
-              placeholder="info@beispiel.ch"
+              placeholder="sekretariat@schule.example"
               className={inputCls(!!newEmail)}
             />
           </div>
@@ -665,7 +665,7 @@ export function ArbeitgeberPage({ employers, onEmployersChange, entries, pensumM
                         type="email"
                         value={ef.email}
                         onChange={(e) => setEf((p) => ({ ...p, email: e.target.value }))}
-                        placeholder="info@beispiel.ch"
+                        placeholder="sekretariat@schule.example"
                         className={inputCls(!!ef.email)}
                       />
                     </div>

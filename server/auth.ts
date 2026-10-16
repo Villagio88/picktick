@@ -10,8 +10,12 @@ import { DATA_DIR } from './store.js';
  *
  * - PICKTICK_PASSWORT: Passwort der Instanz. Ist es nicht gesetzt, läuft PickTick ohne
  *   Anmeldung (nur für den Betrieb im eigenen, geschützten Netz gedacht).
- * - PICKTICK_API_SCHLUESSEL: optional, für Skripte und Kurzbefehle. Wird als
+ * - PICKTICK_API_SCHLUESSEL: optional, voller Zugriff für Skripte. Wird als
  *   «Authorization: Bearer <schlüssel>» mitgeschickt.
+ * - PICKTICK_ERFASSEN_SCHLUESSEL: optional, nur Lesen und neue Einträge anlegen, für
+ *   Kurzbefehle auf dem Handy. Ein verlorenes Handy kann so nichts löschen oder ändern.
+ * - PICKTICK_ORIGIN: optional, zusätzliche erlaubte Herkunft(en) für schreibende Anfragen,
+ *   mit Komma getrennt, zum Beispiel https://zeit.meine-domain.ch
  *
  * Die Sitzung ist ein signiertes Cookie (HMAC-SHA256) mit Ablaufdatum; das Geheimnis
  * dafür liegt im Datenordner und wird beim ersten Start erzeugt.
@@ -25,6 +29,8 @@ const GEHEIMNIS_DATEI = path.join(DATA_DIR, '.sitzung-geheimnis');
 
 const passwort = process.env.PICKTICK_PASSWORT || '';
 const apiSchluessel = process.env.PICKTICK_API_SCHLUESSEL || '';
+const erfassenSchluessel = process.env.PICKTICK_ERFASSEN_SCHLUESSEL || '';
+const erlaubteHerkunft = (process.env.PICKTICK_ORIGIN || '').split(',').map((o) => o.trim().replace(/\/$/, '')).filter(Boolean);
 
 export const anmeldungNoetig = passwort.length > 0;
 
@@ -109,15 +115,29 @@ export function pruefeHerkunft(req: Request, res: Response, next: NextFunction):
   const herkunft = req.headers.origin;
   if (req.method === 'GET' || req.method === 'HEAD' || !herkunft) return next();
   try {
-    if (new URL(herkunft).host === req.headers.host) return next();
+    const url = new URL(herkunft);
+    // Hinter einem Proxy (trust proxy) zählt auch der weitergereichte Host X-Forwarded-Host
+    const eigeneHosts = [req.headers.host, req.app.get('trust proxy') ? req.get('x-forwarded-host') : undefined];
+    if (eigeneHosts.includes(url.host) || erlaubteHerkunft.includes(url.origin)) return next();
   } catch { /* ungültiger Origin */ }
-  res.status(403).json({ error: 'Fremde Herkunft' });
+  console.warn(`[auth] Schreibende Anfrage aus fremder Herkunft abgewiesen: ${herkunft}. Falls das deine eigene Adresse ist: PICKTICK_ORIGIN setzen.`);
+  res.status(403).json({ error: 'Fremde Herkunft. Falls PickTick hinter einem Proxy läuft: PICKTICK_ORIGIN setzen.' });
+}
+
+/** Was der eingeschränkte Erfassen-Schlüssel darf: lesen und neue Einträge anlegen. */
+function erfassenErlaubt(req: Request): boolean {
+  if (req.method === 'GET' || req.method === 'HEAD') return !req.path.toLowerCase().startsWith('/sicherung');
+  return req.method === 'POST' && req.path.toLowerCase() === '/entries';
 }
 
 function istAngemeldet(req: Request): boolean {
   if (!anmeldungNoetig) return true;
   const kopf = req.headers.authorization;
-  if (apiSchluessel && kopf?.startsWith('Bearer ') && gleich(kopf.slice(7), apiSchluessel)) return true;
+  if (kopf?.startsWith('Bearer ')) {
+    const schluessel = kopf.slice(7);
+    if (apiSchluessel && gleich(schluessel, apiSchluessel)) return true;
+    if (erfassenSchluessel && gleich(schluessel, erfassenSchluessel)) return erfassenErlaubt(req);
+  }
   return pruefeSitzung(leseCookie(req, COOKIE));
 }
 

@@ -2,25 +2,9 @@ import { Router } from 'express';
 import { sendeFehler } from '../fehler.js';
 import { lokalesDatum, istGueltigesDatum, istGueltigeZeit } from '../../src/utils/datum.js';
 import { readJSON, writeJSON } from '../store.js';
+import type { TimeEntry, Employer } from '../../src/types/index.js';
+import { istRolle } from '../../src/data/rollen.js';
 
-interface TimeEntry {
-  id: string;
-  beschreibung: string;
-  fuerWen: string;
-  kategorie: string;
-  leistung: string;
-  datum: string;
-  startZeit: string;
-  endZeit: string;
-  dauerMinuten: number;
-  abgerechnet: boolean;
-  rechnungsnummer: string;
-  bezahlt?: boolean;
-  bezahltAm?: string;
-  bezahltVon?: string;
-  kilometer?: number;
-  createdAt: string;
-}
 
 const router = Router();
 
@@ -58,6 +42,9 @@ function validateEntry(body: unknown): { valid: true; entry: TimeEntry } | { val
     return { valid: false, error: 'bezahltAm muss ein gültiges Datum sein' };
   }
   if (typeof obj.abgerechnet !== 'boolean') return { valid: false, error: 'abgerechnet must be a boolean' };
+  if (obj.kategorie != null && !istRolle(obj.kategorie)) {
+    return { valid: false, error: 'kategorie muss leer, technischer Support, pädagogischer Support oder beides sein' };
+  }
 
   // Sanitize: only pick known fields (prevent prototype pollution / extra fields)
   const entry: TimeEntry = {
@@ -138,9 +125,16 @@ router.put('/:id', (req, res) => {
       res.status(400).json({ error: result.error });
       return;
     }
-    const entries = readJSON<TimeEntry[]>('entries.json', []).map((e) =>
-      e.id === req.params.id ? result.entry : e
-    );
+    if (result.entry.id !== req.params.id) {
+      res.status(400).json({ error: 'id im Pfad und im Eintrag stimmen nicht überein' });
+      return;
+    }
+    const bisher = readJSON<TimeEntry[]>('entries.json', []);
+    if (!bisher.some((e) => e.id === req.params.id)) {
+      res.status(404).json({ error: 'Eintrag nicht gefunden' });
+      return;
+    }
+    const entries = bisher.map((e) => (e.id === req.params.id ? result.entry : e));
     writeJSON('entries.json', entries);
     res.json(entries);
   } catch (err) {
@@ -212,16 +206,23 @@ router.post('/mark-abgerechnet', (req, res) => {
     }
     const idSet = new Set(ids as string[]);
     const heute = lokalesDatum();
+    const employers = readJSON<Employer[]>('employers.json', []);
+    // Mit einer Rechnung ist ein Eintrag erst bezahlt, wenn die Zahlung erfasst ist. Bei
+    // Stundenübersichten und automatisch abgerechneten Arbeitgebern gibt es keine offene
+    // Rechnung, dort gilt abgerechnet zugleich als bezahlt.
+    const ohneRechnung = (fuerWen: string) => {
+      const emp = employers.find((x) => x.name === fuerWen);
+      return emp?.abrechnungsModus === 'stundenuebersicht' || !!emp?.autoAbgerechnet;
+    };
     const entries = readJSON<TimeEntry[]>('entries.json', []).map((e) =>
       idSet.has(e.id)
         ? {
             ...e,
             abgerechnet: true,
             rechnungsnummer: (rechnungsnummer as string).slice(0, 100),
-            // abgerechnet impliziert bezahlt
-            bezahlt: true,
-            bezahltVon: e.bezahltVon || e.fuerWen,
-            bezahltAm: e.bezahltAm || heute,
+            ...(ohneRechnung(e.fuerWen)
+              ? { bezahlt: true, bezahltVon: e.bezahltVon || e.fuerWen, bezahltAm: e.bezahltAm || heute }
+              : {}),
           }
         : e
     );

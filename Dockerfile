@@ -12,6 +12,7 @@ RUN npm run build
 FROM ${NODE_IMAGE} AS runner
 WORKDIR /app
 ENV NODE_ENV=production \
+    TZ=Europe/Zurich \
     PORT=3001 \
     HOST=0.0.0.0 \
     PICKTICK_DATEN=/app/daten

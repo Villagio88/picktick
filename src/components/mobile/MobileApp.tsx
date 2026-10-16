@@ -8,6 +8,7 @@ import { MobileNeu } from './MobileNeu';
 import { MobileHistorie } from './MobileHistorie';
 import { MobileMehr } from './MobileMehr';
 import { gueltigeAuswahl } from '../../utils/arbeitgeberWahl';
+import { zumSpeichern } from '../../utils/eintragSpeichern';
 
 export type MobileTab = 'heute' | 'neu' | 'historie' | 'mehr';
 
@@ -61,37 +62,9 @@ export function MobileApp() {
   );
 
   const handleSave = (entry: TimeEntry) => {
-    if (editEntry) {
-      // rechnungsnummer wird von der Abrechnungs-Seite verwaltet -> erhalten
-      entry.rechnungsnummer = editEntry.rechnungsnummer;
-      if (entry.abgerechnet !== editEntry.abgerechnet) {
-        // abgerechnet wurde im Formular per Dropdown geändert -> bezahlt mitführen
-        if (entry.abgerechnet) {
-          entry.bezahlt = true;
-          entry.bezahltVon = editEntry.bezahltVon || entry.fuerWen;
-          entry.bezahltAm = editEntry.bezahltAm || entry.datum;
-        } else {
-          entry.bezahlt = false;
-          entry.bezahltAm = undefined;
-          entry.bezahltVon = undefined;
-        }
-      } else {
-        // unverändert -> Abrechnungs-/Zahlungsfelder unangetastet übernehmen
-        entry.bezahlt = editEntry.bezahlt;
-        entry.bezahltAm = editEntry.bezahltAm;
-        entry.bezahltVon = editEntry.bezahltVon;
-      }
-      update(entry);
-    } else {
-      const emp = employers.find(e => e.name === entry.fuerWen);
-      if (emp?.autoAbgerechnet) {
-        entry.abgerechnet = true;
-        entry.bezahlt = true;
-        entry.bezahltVon = entry.fuerWen;
-        entry.bezahltAm = entry.datum;
-      }
-      add(entry);
-    }
+    const fertig = zumSpeichern(entry, editEntry, employers);
+    if (editEntry) update(fertig);
+    else add(fertig);
     setEditEntry(null);
     setTab('heute');
   };
