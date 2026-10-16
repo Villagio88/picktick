@@ -14,10 +14,11 @@ interface Props {
 export function Archiv({ entries, employer, employers }: Props) {
   const emp = employers.find((e) => e.name === employer);
   const modus = emp?.periodeModus || 'schuljahr';
-  const currentPeriode = getPeriode(new Date(), modus);
+  const aktuellePeriode = getPeriode(new Date(), modus);
+  const periodeStart = aktuellePeriode.start;
   const archivEntries = useMemo(
-    () => entries.filter((e) => e.fuerWen === employer && e.datum < currentPeriode.start).sort((a, b) => b.datum.localeCompare(a.datum)),
-    [entries, employer, currentPeriode]
+    () => entries.filter((e) => e.fuerWen === employer && e.datum < periodeStart).sort((a, b) => b.datum.localeCompare(a.datum)),
+    [entries, employer, periodeStart]
   );
 
   // Group by school year (Aug–Jul)
@@ -44,7 +45,7 @@ export function Archiv({ entries, employer, employers }: Props) {
     return [...map.entries()]
       .sort((a, b) => b[0].localeCompare(a[0]))
       .map(([, val]) => val);
-  }, [archivEntries]);
+  }, [archivEntries, modus]);
 
   const [expandedSj, setExpandedSj] = useState<string | null>(null);
 
@@ -56,7 +57,7 @@ export function Archiv({ entries, employer, employers }: Props) {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Archiv</h1>
           <p className="text-sm text-gray-500">
-            Einträge vor {getPeriodeLabel(modus)} {currentPeriode.label}
+            Einträge vor {getPeriodeLabel(modus)} {aktuellePeriode.label}
           </p>
         </div>
         <button

@@ -87,9 +87,9 @@ export function useEntries() {
     }
   }, []);
 
-  const unmarkBezahlt = useCallback(async (rechnungsnummer: string) => {
+  const unmarkBezahlt = useCallback(async (rechnungsnummer: string, fuerWen: string) => {
     try {
-      setEntries(await apiUnmarkBezahlt(rechnungsnummer));
+      setEntries(await apiUnmarkBezahlt(rechnungsnummer, fuerWen));
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setError(`Zurücksetzen fehlgeschlagen: ${msg}`);

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Save, Plus, X } from 'lucide-react';
+import { Save, Plus, X, Download } from 'lucide-react';
 import type { Einstellungen, Leistung } from '../types';
 import { useEinstellungen } from '../hooks/useEinstellungen';
 import { ROLLEN } from '../data/rollen';
@@ -125,6 +125,17 @@ export function EinstellungenPage() {
           </button>
         </div>
         <p className="text-xs text-gray-400">Bestehende Einträge behalten ihre Leistungen, auch wenn du eine Leistung hier entfernst.</p>
+      </section>
+
+      <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-3">
+        <h2 className="text-lg font-semibold text-gray-900">Sicherung</h2>
+        <p className="text-sm text-gray-500">
+          Alle Daten in einer Datei: Einträge, Arbeitgeber, Pensum und Einstellungen. Lege sie regelmässig an einem
+          zweiten Ort ab; die automatischen Tagessicherungen liegen auf demselben Datenträger wie PickTick.
+        </p>
+        <a href="/api/sicherung" download className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50">
+          <Download className="w-4 h-4" /> Gesamtsicherung herunterladen
+        </a>
       </section>
 
       <div className="flex items-center gap-4">

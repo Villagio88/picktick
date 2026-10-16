@@ -78,6 +78,11 @@ function parseDatumField(datum: string): {
   }
 }
 
+/** Hebt den Formelschutz des Exports wieder auf ('=... wird zu =...). */
+function ohneFormelschutz(v: string): string {
+  return /^'[=+\-@\t\r]/.test(v) ? v.slice(1) : v;
+}
+
 function parseDauerMinuten(value: string): number {
   const num = parseInt(value, 10);
   return isNaN(num) ? 0 : num;
@@ -97,9 +102,9 @@ export function zeilenZuEintraegen(zeilen: CsvRowAll[]): TimeEntry[] {
             );
             return {
               id: uuidv4(),
-              beschreibung: (
+              beschreibung: ohneFormelschutz((
                 row['Beschreibung der Tätigkeit'] || ''
-              ).trim(),
+              ).trim()),
               fuerWen: (row['für wen'] || '').trim(),
               kategorie: (row.Kategorie || row['Kategorie'] || '').trim(),
               leistung: (row.Leistung || row['Leistung'] || '').trim(),
@@ -181,7 +186,8 @@ export function exportCsv(entries: TimeEntry[]): string {
     };
   });
 
-  return Papa.unparse(rows);
+  // Formelschutz: Werte, die mit = + - @ beginnen, öffnet Excel sonst als Formel
+  return Papa.unparse(rows, { escapeFormulae: true });
 }
 
 export function downloadCsv(entries: TimeEntry[], filename: string): void {

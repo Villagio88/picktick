@@ -11,5 +11,5 @@
     "types": ["node"],
     "lib": ["ES2022"]
   },
-  "include": ["server", "src/data/seed.ts", "src/data/standard.ts", "src/data/rollen.ts", "src/types/index.ts"]
+  "include": ["server", "src/data/seed.ts", "src/data/standard.ts", "src/data/rollen.ts", "src/utils/datum.ts", "src/types/index.ts"]
 }

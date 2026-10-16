@@ -6,6 +6,7 @@ import { apiGenerateRechnungsnummer } from '../utils/api';
 import { generateAbrechnung, generateStundenuebersicht } from '../utils/pdf';
 import { useEinstellungen } from '../hooks/useEinstellungen';
 import { rolleKurz } from '../data/rollen';
+import { lokalesDatum } from '../utils/datum';
 
 interface Props {
   entries: TimeEntry[];
@@ -13,7 +14,7 @@ interface Props {
   employers: Employer[];
   onMarkAbgerechnet: (ids: string[], rechnungsnummer: string) => void;
   onMarkBezahlt: (rechnungsnummer: string, bezahltVon: string, bezahltAm: string) => void;
-  onUnmarkBezahlt: (rechnungsnummer: string) => void;
+  onUnmarkBezahlt: (rechnungsnummer: string, fuerWen: string) => void;
 }
 
 interface MonthGroup {
@@ -146,7 +147,7 @@ export function AbrechnungPage({ entries, employer, employers, onMarkAbgerechnet
     try {
       if (isUebersicht) {
         generateStundenuebersicht({ entries: selectedEntries, employer, emp, einstellungen });
-        const marker = `uebersicht-${new Date().toISOString().slice(0, 10)}`;
+        const marker = `uebersicht-${lokalesDatum()}`;
         onMarkAbgerechnet(
           selectedEntries.map((e) => e.id),
           marker
@@ -182,7 +183,7 @@ export function AbrechnungPage({ entries, employer, employers, onMarkAbgerechnet
 
   const openPaymentForm = (group: InvoiceGroup) => {
     setPaymentForm(group.rechnungsnummer);
-    setPayAm(group.bezahltAm || new Date().toISOString().slice(0, 10));
+    setPayAm(group.bezahltAm || lokalesDatum());
   };
 
   const handleMarkBezahlt = () => {
@@ -415,7 +416,7 @@ export function AbrechnungPage({ entries, employer, employers, onMarkAbgerechnet
                             </button>
                           ) : (
                             <button
-                              onClick={() => onUnmarkBezahlt(group.rechnungsnummer)}
+                              onClick={() => onUnmarkBezahlt(group.rechnungsnummer, employer)}
                               className="flex items-center gap-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
                             >
                               Zurücksetzen

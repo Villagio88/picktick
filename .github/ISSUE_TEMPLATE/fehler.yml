@@ -1,0 +1,29 @@
+name: Fehler melden
+description: Etwas funktioniert nicht wie erwartet
+labels: [fehler]
+body:
+  - type: markdown
+    attributes:
+      value: Bitte keine echten Zeiteinträge, Namen oder Zugangsdaten in die Meldung kopieren.
+  - type: textarea
+    id: was
+    attributes:
+      label: Was ist passiert?
+      description: Was hast du gemacht, was hast du erwartet, was ist stattdessen passiert?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Steht unten in der Seitenleiste, zum Beispiel «PickTick 1.1.0»
+  - type: dropdown
+    id: betrieb
+    attributes:
+      label: Betrieb
+      options: [Docker, ohne Docker, anderes]
+  - type: textarea
+    id: log
+    attributes:
+      label: Auszug aus dem Server-Log
+      render: text

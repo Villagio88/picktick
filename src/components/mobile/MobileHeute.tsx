@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Pencil, Trash2, Briefcase, Plus } from 'lucide-react';
 import type { TimeEntry, Employer } from '../../types';
 import { formatDauer, formatDatum, todayISO } from '../../utils/format';
+import { lokalesDatum } from '../../utils/datum';
 
 interface Props {
   entries: TimeEntry[];
@@ -19,7 +20,7 @@ function startOfWeekISO(date: Date): string {
   const day = d.getDay();
   const diff = day === 0 ? -6 : 1 - day; // Montag = Wochenstart
   d.setDate(d.getDate() + diff);
-  return d.toISOString().slice(0, 10);
+  return lokalesDatum(d);
 }
 
 function startOfMonthISO(date: Date): string {

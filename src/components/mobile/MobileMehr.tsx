@@ -1,5 +1,6 @@
 import { Monitor, Briefcase, FileText, Receipt, Archive, BarChart3, Info } from 'lucide-react';
 import type { Employer } from '../../types';
+import { QUELLCODE_URL, VERSION } from '../../data/projekt';
 
 interface Props {
   employers: Employer[];
@@ -50,7 +51,7 @@ export function MobileMehr({ employers, selectedEmployer, onSelectEmployer, entr
         </div>
         <p className="text-[11px] text-gray-500 mt-2 px-1 flex items-start gap-1.5">
           <Info className="w-3 h-3 mt-0.5 shrink-0" />
-          Diese Funktionen sind für grössere Bildschirme optimiert. Auf dem Mac/iPad in Querformat öffnen.
+          Diese Funktionen sind für grössere Bildschirme optimiert. Am Computer oder auf dem Tablet im Querformat öffnen.
         </p>
       </section>
 
@@ -60,6 +61,7 @@ export function MobileMehr({ employers, selectedEmployer, onSelectEmployer, entr
         <div className="bg-white rounded-xl border border-gray-200 p-3 text-xs text-gray-600 space-y-0.5">
           <div className="flex justify-between"><span>Einträge gesamt</span><span className="font-semibold text-gray-900">{entriesCount}</span></div>
           <div className="flex justify-between"><span>Arbeitgeber</span><span className="font-semibold text-gray-900">{employers.length}</span></div>
+          <div className="flex justify-between"><span>Version</span><a href={QUELLCODE_URL} target="_blank" rel="noreferrer" className="font-semibold text-gray-900 underline">PickTick {VERSION}, Quellcode (AGPL-3.0)</a></div>
         </div>
       </section>
     </div>

@@ -1,0 +1,27 @@
+# PickTick mit Caddy davor: automatisches HTTPS über Let's Encrypt.
+# Voraussetzung: eine Domain (zum Beispiel zeit.meine-schule.ch) zeigt auf diesen Server,
+# Ports 80 und 443 sind offen. Start:
+#   PICKTICK_DOMAIN=zeit.meine-schule.ch docker compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
+services:
+  picktick:
+    ports: !reset []
+    environment:
+      PICKTICK_HINTER_PROXY: "1"
+
+  caddy:
+    image: caddy:2
+    container_name: picktick-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      PICKTICK_DOMAIN: "${PICKTICK_DOMAIN:?Bitte PICKTICK_DOMAIN setzen}"
+    command: caddy reverse-proxy --from ${PICKTICK_DOMAIN} --to picktick:3001
+    volumes:
+      - caddy-daten:/data
+    depends_on:
+      - picktick
+
+volumes:
+  caddy-daten:

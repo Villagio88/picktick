@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Target, Clock, GraduationCap, Receipt } from 'lucide-react';
 import type { TimeEntry, Employer } from '../types';
 import { formatDauer, getMonatName, getMonatOrder, getPeriodeLabel, periodeKeyToRange, periodeKeyToLabel } from '../utils/format';
@@ -22,7 +22,8 @@ interface Props {
 }
 
 export function Dashboard({ entries, allEntries, onNewEntry, onNavigate, employer, employers, periodeKey, isCurrentPeriode, pensumMap }: Props) {
-  const now = new Date();
+  // Zeitpunkt einmal je Anzeige festhalten, damit Berechnungen stabil bleiben
+  const [now] = useState(() => new Date());
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
   const emp = employers.find(e => e.name === employer);
@@ -87,7 +88,9 @@ export function Dashboard({ entries, allEntries, onNewEntry, onNavigate, employe
     let cumProtokolliert = 0;
     let cumMitPauschal = 0;
     let cumSoll = 0;
-    return schuljahrMonthly.map((m, i) => {
+    const zeilen = [];
+    for (let i = 0; i < schuljahrMonthly.length; i++) {
+      const m = schuljahrMonthly[i];
       const protokolliert = m.min / 60;
       const isPast = i < currentMonthIdx;
       const isCurrent = i === currentMonthIdx;
@@ -101,7 +104,7 @@ export function Dashboard({ entries, allEntries, onNewEntry, onNavigate, employe
       cumMitPauschal += total;
       cumSoll += isPast || isCurrent ? sollMonat : SOLL_MONAT;
       const diffKumuliert = cumMitPauschal - cumSoll;
-      return {
+      zeilen.push({
         ...m,
         protokolliert,
         pauschal,
@@ -115,8 +118,9 @@ export function Dashboard({ entries, allEntries, onNewEntry, onNavigate, employe
         isPast,
         isCurrent,
         isFuture: i > currentMonthIdx,
-      };
-    });
+      });
+    }
+    return zeilen;
   }, [schuljahrMonthly, currentMonthIdx, SOLL_MONAT, currentMonthFraction, employerHasSoll, pauschaleProMonat]);
 
   // Aktuelle Werte. Aktuelle Periode: aktueller Monat; alte Periode: letzter Monat (Jahresabschluss)

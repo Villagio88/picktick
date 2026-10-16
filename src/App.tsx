@@ -313,6 +313,7 @@ function DesktopApp() {
       {/* Neuer Eintrag / Bearbeiten Modal */}
       {showEntryForm && (
         <EntryForm
+          key={editEntry?.id ?? 'neu'}
           onSave={handleSave}
           onCancel={handleCancelEntry}
           editEntry={editEntry}

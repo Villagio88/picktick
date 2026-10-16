@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Save, X } from 'lucide-react';
 import type { TimeEntry, Employer } from '../../types';
@@ -46,18 +46,15 @@ export function MobileNeu({ employers, selectedEmployer, editEntry, onSave, onCa
   const [datum, setDatum] = useState(editEntry?.datum || todayISO());
   const [startZeit, setStartZeit] = useState(editEntry?.startZeit || currentTime());
   const [endZeit, setEndZeit] = useState(editEntry?.endZeit || '');
-  const [dauerMinuten, setDauerMinuten] = useState(editEntry?.dauerMinuten || 0);
+  const [dauerEingabe, setDauerMinuten] = useState(editEntry?.dauerMinuten || 0);
   const [manualDauer, setManualDauer] = useState(
     editEntry ? !(editEntry.startZeit && editEntry.endZeit) : false
   );
   const [kilometer, setKilometer] = useState(editEntry?.kilometer || 0);
   const [abgerechnet, setAbgerechnet] = useState(editEntry?.abgerechnet ?? false);
 
-  useEffect(() => {
-    if (!manualDauer && startZeit && endZeit) {
-      setDauerMinuten(berechneMinuten(startZeit, endZeit));
-    }
-  }, [startZeit, endZeit, manualDauer]);
+  // Mit Start und Ende wird die Dauer berechnet, sonst gilt die Eingabe
+  const dauerMinuten = !manualDauer && startZeit && endZeit ? berechneMinuten(startZeit, endZeit) : dauerEingabe;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -108,7 +105,7 @@ export function MobileNeu({ employers, selectedEmployer, editEntry, onSave, onCa
           <textarea
             value={beschreibung}
             onChange={(e) => setBeschreibung(e.target.value)}
-            placeholder="z.B. Drucker im Lehrerzimmer neu eingerichtet"
+            placeholder="z.B. Drucker im Lehrerzimmer neu eingerichtet (ohne Namen von Kindern)"
             rows={4}
             autoFocus={!isEdit}
             className="w-full px-3 py-2.5 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
@@ -139,7 +136,7 @@ export function MobileNeu({ employers, selectedEmployer, editEntry, onSave, onCa
             </button>
             <button
               type="button"
-              onClick={() => setManualDauer(true)}
+              onClick={() => { setDauerMinuten(dauerMinuten); setManualDauer(true); }}
               className={`flex-1 py-2 text-sm rounded-lg border transition-colors ${
                 manualDauer ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'
               }`}

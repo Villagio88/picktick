@@ -19,50 +19,27 @@ interface Props {
 }
 
 export function EntryForm({ onSave, onCancel, editEntry, employers, initialDate }: Props) {
-  const [beschreibung, setBeschreibung] = useState('');
+  // Startwerte aus dem bearbeiteten Eintrag; App setzt einen key je Eintrag, damit das
+  // Formular beim Wechsel neu startet statt Werte per Effect nachzuziehen.
+  const [beschreibung, setBeschreibung] = useState(editEntry?.beschreibung ?? '');
   const [fuerWen, setFuerWen] = useState(
-    () => (employers.find((e) => e.hasSoll) ?? employers[0])?.name ?? '',
+    () => editEntry?.fuerWen ?? (employers.find((e) => e.hasSoll) ?? employers[0])?.name ?? '',
   );
-  const [kategorie, setKategorie] = useState('');
+  const [kategorie, setKategorie] = useState(editEntry?.kategorie ?? '');
   // true, solange die Rolle nur aus den Leistungen vorgeschlagen ist
   const [rolleVorgeschlagen, setRolleVorgeschlagen] = useState(false);
   const { leistungen: leistungsListe } = useEinstellungen().einstellungen;
-  const [leistung, setLeistung] = useState('');
-  const [datum, setDatum] = useState(initialDate || todayISO());
-  const [startZeit, setStartZeit] = useState(currentTime());
-  const [endZeit, setEndZeit] = useState('');
-  const [dauerMinuten, setDauerMinuten] = useState(0);
-  const [manualDauer, setManualDauer] = useState(false);
-  const [kilometer, setKilometer] = useState(0);
-  const [abgerechnet, setAbgerechnet] = useState(false);
+  const [leistung, setLeistung] = useState(editEntry?.leistung ?? '');
+  const [datum, setDatum] = useState(editEntry?.datum ?? (initialDate || todayISO()));
+  const [startZeit, setStartZeit] = useState(editEntry ? editEntry.startZeit ?? '' : currentTime());
+  const [endZeit, setEndZeit] = useState(editEntry?.endZeit ?? '');
+  const [dauerEingabe, setDauerMinuten] = useState(editEntry?.dauerMinuten ?? 0);
+  const [manualDauer, setManualDauer] = useState(editEntry ? !(editEntry.startZeit && editEntry.endZeit) : false);
+  const [kilometer, setKilometer] = useState(editEntry?.kilometer || 0);
+  const [abgerechnet, setAbgerechnet] = useState(editEntry?.abgerechnet ?? false);
   const [rechnungsnummer] = useState('');
-
-  useEffect(() => {
-    if (editEntry) {
-      setBeschreibung(editEntry.beschreibung);
-      setFuerWen(editEntry.fuerWen);
-      setKategorie(editEntry.kategorie);
-      setRolleVorgeschlagen(false);
-      setLeistung(editEntry.leistung);
-      setDatum(editEntry.datum);
-      setStartZeit(editEntry.startZeit ?? '');
-      setEndZeit(editEntry.endZeit ?? '');
-      setDauerMinuten(editEntry.dauerMinuten);
-      setKilometer(editEntry.kilometer || 0);
-      setAbgerechnet(editEntry.abgerechnet);
-      if (editEntry.startZeit && editEntry.endZeit) {
-        setManualDauer(false);
-      } else {
-        setManualDauer(true);
-      }
-    }
-  }, [editEntry]);
-
-  useEffect(() => {
-    if (!manualDauer && startZeit && endZeit) {
-      setDauerMinuten(berechneMinuten(startZeit, endZeit));
-    }
-  }, [startZeit, endZeit, manualDauer]);
+  // Mit Start und Ende wird die Dauer berechnet, sonst gilt die Eingabe
+  const dauerMinuten = !manualDauer && startZeit && endZeit ? berechneMinuten(startZeit, endZeit) : dauerEingabe;
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel(); };
@@ -142,7 +119,7 @@ export function EntryForm({ onSave, onCancel, editEntry, employers, initialDate 
               onChange={(e) => setBeschreibung(e.target.value)}
               rows={3}
               className={`w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${beschreibung ? 'bg-gray-100' : 'bg-white'}`}
-              placeholder="Was wurde gemacht?"
+              placeholder="Was wurde gemacht? Ohne Namen von Schülerinnen und Schülern."
               required
               autoFocus
             />
@@ -235,7 +212,7 @@ export function EntryForm({ onSave, onCancel, editEntry, employers, initialDate 
                   <input
                     type="checkbox"
                     checked={manualDauer}
-                    onChange={(e) => setManualDauer(e.target.checked)}
+                    onChange={(e) => { if (e.target.checked) setDauerMinuten(dauerMinuten); setManualDauer(e.target.checked); }}
                     className="rounded"
                   />
                   Manuell

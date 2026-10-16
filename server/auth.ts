@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
+import { DATA_DIR } from './store.js';
 
 /**
  * Anmeldung für PickTick.
@@ -17,15 +18,20 @@ import type { Request, Response, NextFunction } from 'express';
  */
 
 const COOKIE = 'picktick_sitzung';
-const DAUER_MS = 30 * 24 * 60 * 60 * 1000;
-// Datenordner; im Container über PICKTICK_DATEN oder das gemountete server/data
-const DATA_DIR = process.env.PICKTICK_DATEN || path.join(import.meta.dirname, 'data');
+const DAUER_MS = 14 * 24 * 60 * 60 * 1000;
+const MINDESTLAENGE = 12;
+
 const GEHEIMNIS_DATEI = path.join(DATA_DIR, '.sitzung-geheimnis');
 
 const passwort = process.env.PICKTICK_PASSWORT || '';
 const apiSchluessel = process.env.PICKTICK_API_SCHLUESSEL || '';
 
 export const anmeldungNoetig = passwort.length > 0;
+
+if (anmeldungNoetig && passwort.length < MINDESTLAENGE) {
+  console.error(`[auth] PICKTICK_PASSWORT ist kürzer als ${MINDESTLAENGE} Zeichen. Bitte ein längeres Passwort setzen.`);
+  process.exit(1);
+}
 
 function ladeGeheimnis(): Buffer {
   try {
@@ -56,17 +62,33 @@ export function gleich(a: string, b: string): boolean {
   return crypto.timingSafeEqual(ha, hb) && a.length === b.length;
 }
 
+// Sitzungsgeneration: «Abmelden» erhöht sie und beendet damit alle bestehenden Sitzungen.
+const GENERATION_DATEI = path.join(DATA_DIR, '.sitzung-generation');
+
+function generation(): number {
+  try {
+    const n = Number(fs.readFileSync(GENERATION_DATEI, 'utf-8').trim());
+    return Number.isInteger(n) && n >= 0 ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function naechsteGeneration(): void {
+  fs.writeFileSync(GENERATION_DATEI, String(generation() + 1), { mode: 0o600 });
+}
+
 export function erzeugeSitzung(jetzt = Date.now()): string {
-  const ablauf = String(jetzt + DAUER_MS);
-  return `${ablauf}.${signiere(ablauf)}`;
+  const kopf = `${jetzt + DAUER_MS}.${generation()}`;
+  return `${kopf}.${signiere(kopf)}`;
 }
 
 export function pruefeSitzung(wert: string | undefined, jetzt = Date.now()): boolean {
   if (!wert) return false;
-  const [ablauf, sig] = wert.split('.');
-  if (!ablauf || !sig || !/^\d+$/.test(ablauf)) return false;
-  if (!gleich(sig, signiere(ablauf))) return false;
-  return Number(ablauf) > jetzt;
+  const [ablauf, gen, sig] = wert.split('.');
+  if (!ablauf || !gen || !sig || !/^\d+$/.test(ablauf) || !/^\d+$/.test(gen)) return false;
+  if (!gleich(sig, signiere(`${ablauf}.${gen}`))) return false;
+  return Number(ablauf) > jetzt && Number(gen) === generation();
 }
 
 function leseCookie(req: Request, name: string): string | undefined {
@@ -77,6 +99,19 @@ function leseCookie(req: Request, name: string): string | undefined {
     if (k === name) return decodeURIComponent(v.join('='));
   }
   return undefined;
+}
+
+/**
+ * Schutz gegen Anfragen aus fremden Seiten (CSRF): Schreibende Anfragen mit Origin-Kopf
+ * müssen vom eigenen Host kommen. Ergänzt SameSite=Strict für mehrere Dienste unter einer Domain.
+ */
+export function pruefeHerkunft(req: Request, res: Response, next: NextFunction): void {
+  const herkunft = req.headers.origin;
+  if (req.method === 'GET' || req.method === 'HEAD' || !herkunft) return next();
+  try {
+    if (new URL(herkunft).host === req.headers.host) return next();
+  } catch { /* ungültiger Origin */ }
+  res.status(403).json({ error: 'Fremde Herkunft' });
 }
 
 function istAngemeldet(req: Request): boolean {
@@ -131,17 +166,21 @@ router.post('/login', (req, res) => {
   }
   const eingabe = (req.body as { passwort?: unknown })?.passwort;
   if (typeof eingabe !== 'string' || !gleich(eingabe, passwort)) {
+    console.warn(`[auth] Fehlgeschlagene Anmeldung von ${ip}`);
     const neu = !f || jetzt - f.seit >= FENSTER_MS ? { anzahl: 1, seit: jetzt } : { ...f, anzahl: f.anzahl + 1 };
     fehlversuche.set(ip, neu);
     res.status(401).json({ error: 'Passwort falsch' });
     return;
   }
   fehlversuche.delete(ip);
+  console.log(`[auth] Anmeldung von ${ip}`);
   setzeCookie(req, res, erzeugeSitzung(jetzt), DAUER_MS / 1000);
   res.json({ angemeldet: true });
 });
 
 router.post('/logout', (req, res) => {
+  // Nur eine angemeldete Sitzung darf alle Sitzungen beenden
+  if (anmeldungNoetig && pruefeSitzung(leseCookie(req, COOKIE))) naechsteGeneration();
   setzeCookie(req, res, '', 0);
   res.json({ angemeldet: false });
 });

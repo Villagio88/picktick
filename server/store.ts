@@ -1,8 +1,9 @@
 import fs from 'fs';
 import path from 'path';
+import { lokalesDatum } from '../src/utils/datum.js';
 
 // Datenordner; im Container über PICKTICK_DATEN oder das gemountete server/data
-const DATA_DIR = process.env.PICKTICK_DATEN || path.join(import.meta.dirname, 'data');
+export const DATA_DIR = process.env.PICKTICK_DATEN || path.resolve(import.meta.dirname, '..', 'daten');
 const BACKUP_DIR = path.join(DATA_DIR, 'backups');
 
 if (!fs.existsSync(DATA_DIR)) {
@@ -27,31 +28,35 @@ function sanitizeFilename(filename: string): string {
   return base;
 }
 
+/** Fehler, wenn eine vorhandene Datendatei nicht lesbar ist. Schreiben bleibt dann gesperrt. */
+export class DatenFehler extends Error {}
+
+/**
+ * Liest eine JSON-Datei. Fehlt sie, gilt der Ersatzwert (frische Installation).
+ * Ist sie vorhanden, aber beschädigt, wird die Vorversion aus backups/ zurückgeholt
+ * und laut geloggt; ist auch die nicht lesbar, wirft die Funktion einen DatenFehler,
+ * damit nie eine leere Liste über echte Daten geschrieben wird.
+ */
 export function readJSON<T>(filename: string, fallback: T): T {
   const safeFilename = sanitizeFilename(filename);
   const filepath = path.join(DATA_DIR, safeFilename);
+  if (!fs.existsSync(filepath)) return fallback;
   try {
-    if (!fs.existsSync(filepath)) return fallback;
-    const raw = fs.readFileSync(filepath, 'utf-8');
-    if (!raw.trim()) return fallback;
-    return JSON.parse(raw) as T;
+    return JSON.parse(fs.readFileSync(filepath, 'utf-8')) as T;
   } catch (err) {
-    // If the main file is corrupt, try the backup
     const backupPath = path.join(BACKUP_DIR, safeFilename);
     try {
-      if (fs.existsSync(backupPath)) {
-        console.warn(`[store] Main file ${safeFilename} corrupt, restoring from backup`);
-        const backupRaw = fs.readFileSync(backupPath, 'utf-8');
-        const data = JSON.parse(backupRaw) as T;
-        // Restore main file from backup
-        fs.writeFileSync(filepath, backupRaw, 'utf-8');
-        return data;
-      }
+      const backupRaw = fs.readFileSync(backupPath, 'utf-8');
+      const data = JSON.parse(backupRaw) as T;
+      // Beschädigte Datei aufheben, Vorversion zurückschreiben
+      fs.copyFileSync(filepath, `${filepath}.beschaedigt-${Date.now()}`);
+      fs.writeFileSync(filepath, backupRaw, 'utf-8');
+      console.error(`[store] ${safeFilename} war beschädigt und wurde aus der Vorversion wiederhergestellt. Der letzte Schreibvorgang kann fehlen. Die beschädigte Datei liegt daneben.`);
+      return data;
     } catch {
-      console.error(`[store] Backup for ${safeFilename} also corrupt`);
+      console.error(`[store] ${safeFilename} ist beschädigt und ohne lesbare Vorversion:`, err);
+      throw new DatenFehler(`${safeFilename} ist nicht lesbar. Bitte aus einer Sicherung wiederherstellen.`);
     }
-    console.error(`[store] Failed to read ${safeFilename}:`, err);
-    return fallback;
   }
 }
 
@@ -99,7 +104,7 @@ export function writeJSON(filename: string, data: unknown): void {
  * Called periodically or on server start.
  */
 export function createDailyBackup(): void {
-  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const today = lokalesDatum(); // JJJJ-MM-TT, lokal
   const snapshotDir = path.join(BACKUP_DIR, `snapshot-${today}`);
 
   // Only one snapshot per day

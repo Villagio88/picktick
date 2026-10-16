@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { sendeFehler } from '../fehler.js';
 import { readJSON, writeJSON } from '../store.js';
 
 interface PensumConfig {
@@ -13,7 +14,7 @@ router.get('/', (_req, res) => {
     res.json(config);
   } catch (err) {
     console.error('[pensum] GET / failed:', err);
-    res.status(500).json({ error: 'Failed to read pensum config' });
+    sendeFehler(res, err, 'Failed to read pensum config');
   }
 });
 
@@ -40,7 +41,7 @@ router.put('/:schuljahrLabel', (req, res) => {
     res.json(config);
   } catch (err) {
     console.error('[pensum] PUT /:schuljahrLabel failed:', err);
-    res.status(500).json({ error: 'Failed to update pensum config' });
+    sendeFehler(res, err, 'Failed to update pensum config');
   }
 });
 

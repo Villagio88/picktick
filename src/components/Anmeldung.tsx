@@ -28,6 +28,8 @@ export function Anmeldung({ onAngemeldet }: { onAngemeldet: () => void }) {
           <h1 className="text-2xl font-bold text-gray-900">PickTick</h1>
           <p className="text-sm text-gray-500">Zeiterfassung für PICTS und TICTS</p>
         </div>
+        {/* Für Passwortmanager: Instanzen haben keinen Benutzernamen */}
+        <input type="text" name="username" autoComplete="username" value="picktick" readOnly hidden />
         <label className="block">
           <span className="block text-sm font-medium text-gray-700 mb-1">Passwort</span>
           <input

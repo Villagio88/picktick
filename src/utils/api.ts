@@ -74,11 +74,12 @@ export function apiMarkAbgerechnet(ids: string[], rechnungsnummer: string): Prom
 }
 
 export function apiMarkBezahlt(rechnungsnummer: string, bezahltVon: string, bezahltAm: string): Promise<TimeEntry[]> {
-  return post('/api/entries/mark-bezahlt', { rechnungsnummer, bezahltVon, bezahltAm });
+  // bezahltVon ist der Auftraggeber; der Server filtert die Rechnung danach
+  return post('/api/entries/mark-bezahlt', { rechnungsnummer, bezahltVon, bezahltAm, fuerWen: bezahltVon });
 }
 
-export function apiUnmarkBezahlt(rechnungsnummer: string): Promise<TimeEntry[]> {
-  return post('/api/entries/unmark-bezahlt', { rechnungsnummer });
+export function apiUnmarkBezahlt(rechnungsnummer: string, fuerWen: string): Promise<TimeEntry[]> {
+  return post('/api/entries/unmark-bezahlt', { rechnungsnummer, fuerWen });
 }
 
 // --- Employers ---

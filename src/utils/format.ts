@@ -1,3 +1,4 @@
+import { lokalesDatum } from './datum';
 export function formatDauer(minuten: number): string {
   const h = Math.floor(minuten / 60);
   const m = minuten % 60;
@@ -132,7 +133,7 @@ export function joinLeistungen(werte: string[]): string {
 }
 
 export function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  return lokalesDatum();
 }
 
 export function currentTime(): string {

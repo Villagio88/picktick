@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { sendeFehler } from '../fehler.js';
 import { readJSON, writeJSON } from '../store.js';
 
 const router = Router();
@@ -27,7 +28,7 @@ router.post('/generate-nummer', (req, res) => {
     res.json({ nummer });
   } catch (err) {
     console.error('[invoice] POST /generate-nummer failed:', err);
-    res.status(500).json({ error: 'Failed to generate invoice number' });
+    sendeFehler(res, err, 'Failed to generate invoice number');
   }
 });
 

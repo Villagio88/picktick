@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { TimeEntry, Employer, Einstellungen } from '../types';
+import { lokalesDatum } from './datum';
 
 interface AbrechnungParams {
   entries: TimeEntry[];
@@ -35,10 +36,8 @@ export function generateAbrechnung({ entries, employer, rechnungsnummer, stunden
   const gesamtNetto = totalStunden * rate;
 
   const today = new Date();
-  const todayISO = today.toISOString().slice(0, 10);
-  const zahlbarBis = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
+  const todayISO = lokalesDatum(today);
+  const zahlbarBis = lokalesDatum(new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000));
 
   // ─── Absenderzeile (klein, oben) ───
   let y = 20;
@@ -315,7 +314,7 @@ export function generateStundenuebersicht({ entries, employer, emp, einstellunge
   const totalKm = sorted.reduce((s, e) => s + (e.kilometer || 0), 0);
 
   const today = new Date();
-  const todayISO = today.toISOString().slice(0, 10);
+  const todayISO = lokalesDatum(today);
 
   // --- Absenderzeile ---
   let y = 20;

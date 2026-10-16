@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { sendeFehler } from '../fehler.js';
 import { readJSON, writeJSON } from '../store.js';
 import { STANDARD_EINSTELLUNGEN } from '../../src/data/standard.js';
 import type { Einstellungen, Leistung } from '../../src/types/index.js';
@@ -53,7 +54,7 @@ router.get('/', (_req, res) => {
     res.json(leseEinstellungen());
   } catch (err) {
     console.error('[settings] GET / failed:', err);
-    res.status(500).json({ error: 'Failed to read settings' });
+    sendeFehler(res, err, 'Failed to read settings');
   }
 });
 
@@ -68,7 +69,7 @@ router.put('/', (req, res) => {
     res.json(neu);
   } catch (err) {
     console.error('[settings] PUT / failed:', err);
-    res.status(500).json({ error: 'Failed to save settings' });
+    sendeFehler(res, err, 'Failed to save settings');
   }
 });
 

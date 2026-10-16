@@ -146,6 +146,7 @@ export function MobileApp() {
         )}
         {tab === 'neu' && (
           <MobileNeu
+            key={editEntry?.id ?? "neu"}
             employers={employers}
             selectedEmployer={selectedEmployer}
             editEntry={editEntry}

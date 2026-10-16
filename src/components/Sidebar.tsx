@@ -12,6 +12,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import type { ViewMode, Employer } from '../types';
+import { QUELLCODE_URL, VERSION } from '../data/projekt';
 
 interface Props {
   currentView: ViewMode;
@@ -145,6 +146,14 @@ export function Sidebar({ currentView, onNavigate, onNewEntry, onImport, employe
             Abmelden
           </button>
         )}
+        <a
+          href={QUELLCODE_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="block px-3 pt-3 text-[11px] text-gray-400 hover:text-gray-600"
+        >
+          PickTick {VERSION} · Quellcode (AGPL-3.0)
+        </a>
       </div>
     </aside>
   );

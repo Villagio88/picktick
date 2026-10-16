@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { sendeFehler } from '../fehler.js';
+import { lokalesDatum, istGueltigesDatum, istGueltigeZeit } from '../../src/utils/datum.js';
 import { readJSON, writeJSON } from '../store.js';
 
 interface TimeEntry {
@@ -43,14 +45,17 @@ function validateEntry(body: unknown): { valid: true; entry: TimeEntry } | { val
   if (!isNonEmptyString(obj.id)) return { valid: false, error: 'id is required and must be a non-empty string' };
   if (!isString(obj.beschreibung)) return { valid: false, error: 'beschreibung must be a string' };
   if (!isNonEmptyString(obj.fuerWen)) return { valid: false, error: 'fuerWen is required' };
-  if (!isString(obj.datum)) return { valid: false, error: 'datum must be a string' };
+  if (!istGueltigesDatum(obj.datum)) return { valid: false, error: 'datum muss ein gültiges Datum JJJJ-MM-TT sein' };
   // Alteinträge ohne Uhrzeit: fehlende Zeiten gelten als leer
   if (obj.startZeit == null) obj.startZeit = '';
   if (obj.endZeit == null) obj.endZeit = '';
-  if (!isString(obj.startZeit)) return { valid: false, error: 'startZeit must be a string' };
-  if (!isString(obj.endZeit)) return { valid: false, error: 'endZeit must be a string' };
-  if (typeof obj.dauerMinuten !== 'number' || obj.dauerMinuten < 0) {
-    return { valid: false, error: 'dauerMinuten must be a non-negative number' };
+  if (!istGueltigeZeit(obj.startZeit)) return { valid: false, error: 'startZeit muss leer oder HH:MM sein' };
+  if (!istGueltigeZeit(obj.endZeit)) return { valid: false, error: 'endZeit muss leer oder HH:MM sein' };
+  if (typeof obj.dauerMinuten !== 'number' || !Number.isFinite(obj.dauerMinuten) || obj.dauerMinuten < 0 || obj.dauerMinuten > 1440) {
+    return { valid: false, error: 'dauerMinuten muss zwischen 0 und 1440 liegen' };
+  }
+  if (obj.bezahltAm != null && obj.bezahltAm !== '' && !istGueltigesDatum(obj.bezahltAm)) {
+    return { valid: false, error: 'bezahltAm muss ein gültiges Datum sein' };
   }
   if (typeof obj.abgerechnet !== 'boolean') return { valid: false, error: 'abgerechnet must be a boolean' };
 
@@ -82,9 +87,12 @@ function validateEntryArray(body: unknown): { valid: true; entries: TimeEntry[] 
   if (body.length > 50000) return { valid: false, error: 'Too many entries (max 50000)' };
 
   const entries: TimeEntry[] = [];
+  const ids = new Set<string>();
   for (let i = 0; i < body.length; i++) {
     const result = validateEntry(body[i]);
     if (!result.valid) return { valid: false, error: `Entry [${i}]: ${result.error}` };
+    if (ids.has(result.entry.id)) return { valid: false, error: `Entry [${i}]: doppelte id` };
+    ids.add(result.entry.id);
     entries.push(result.entry);
   }
   return { valid: true, entries };
@@ -98,7 +106,7 @@ router.get('/', (_req, res) => {
     res.json(entries);
   } catch (err) {
     console.error('[entries] GET / failed:', err);
-    res.status(500).json({ error: 'Failed to read entries' });
+    sendeFehler(res, err, 'Failed to read entries');
   }
 });
 
@@ -110,12 +118,16 @@ router.post('/', (req, res) => {
       return;
     }
     const entries = readJSON<TimeEntry[]>('entries.json', []);
+    if (entries.some((e) => e.id === result.entry.id)) {
+      res.status(409).json({ error: 'Eintrag mit dieser id existiert bereits' });
+      return;
+    }
     entries.unshift(result.entry);
     writeJSON('entries.json', entries);
     res.json(entries);
   } catch (err) {
     console.error('[entries] POST / failed:', err);
-    res.status(500).json({ error: 'Failed to save entry' });
+    sendeFehler(res, err, 'Failed to save entry');
   }
 });
 
@@ -133,7 +145,7 @@ router.put('/:id', (req, res) => {
     res.json(entries);
   } catch (err) {
     console.error('[entries] PUT /:id failed:', err);
-    res.status(500).json({ error: 'Failed to update entry' });
+    sendeFehler(res, err, 'Failed to update entry');
   }
 });
 
@@ -146,7 +158,7 @@ router.delete('/:id', (req, res) => {
     res.json(entries);
   } catch (err) {
     console.error('[entries] DELETE /:id failed:', err);
-    res.status(500).json({ error: 'Failed to delete entry' });
+    sendeFehler(res, err, 'Failed to delete entry');
   }
 });
 
@@ -162,7 +174,7 @@ router.put('/', (req, res) => {
     res.json(result.entries);
   } catch (err) {
     console.error('[entries] PUT / (replace all) failed:', err);
-    res.status(500).json({ error: 'Failed to replace entries' });
+    sendeFehler(res, err, 'Failed to replace entries');
   }
 });
 
@@ -175,12 +187,14 @@ router.post('/import', (req, res) => {
       return;
     }
     const current = readJSON<TimeEntry[]>('entries.json', []);
-    const merged = [...result.entries, ...current];
+    const vorhanden = new Set(current.map((e) => e.id));
+    // Beim Zusammenführen bestehende Einträge nicht doppelt anlegen
+    const merged = [...result.entries.filter((e) => !vorhanden.has(e.id)), ...current];
     writeJSON('entries.json', merged);
     res.json(merged);
   } catch (err) {
     console.error('[entries] POST /import failed:', err);
-    res.status(500).json({ error: 'Failed to import entries' });
+    sendeFehler(res, err, 'Failed to import entries');
   }
 });
 
@@ -197,7 +211,7 @@ router.post('/mark-abgerechnet', (req, res) => {
       return;
     }
     const idSet = new Set(ids as string[]);
-    const heute = new Date().toISOString().slice(0, 10);
+    const heute = lokalesDatum();
     const entries = readJSON<TimeEntry[]>('entries.json', []).map((e) =>
       idSet.has(e.id)
         ? {
@@ -215,20 +229,22 @@ router.post('/mark-abgerechnet', (req, res) => {
     res.json(entries);
   } catch (err) {
     console.error('[entries] POST /mark-abgerechnet failed:', err);
-    res.status(500).json({ error: 'Failed to mark entries' });
+    sendeFehler(res, err, 'Failed to mark entries');
   }
 });
 
 // Mark as bezahlt
 router.post('/mark-bezahlt', (req, res) => {
   try {
-    const { rechnungsnummer, bezahltVon, bezahltAm } = req.body as Record<string, unknown>;
-    if (typeof rechnungsnummer !== 'string' || typeof bezahltVon !== 'string' || typeof bezahltAm !== 'string') {
-      res.status(400).json({ error: 'rechnungsnummer, bezahltVon, and bezahltAm must be strings' });
+    const { rechnungsnummer, bezahltVon, bezahltAm, fuerWen } = req.body as Record<string, unknown>;
+    if (typeof rechnungsnummer !== 'string' || typeof bezahltVon !== 'string' || !istGueltigesDatum(bezahltAm)) {
+      res.status(400).json({ error: 'rechnungsnummer, bezahltVon und ein gültiges bezahltAm sind nötig' });
       return;
     }
+    // Rechnungsnummern beginnen je Auftraggeber bei 001, deshalb immer mit Auftraggeber filtern
+    const auftraggeber = typeof fuerWen === 'string' && fuerWen ? fuerWen : bezahltVon;
     const entries = readJSON<TimeEntry[]>('entries.json', []).map((e) =>
-      e.rechnungsnummer === rechnungsnummer
+      e.rechnungsnummer === rechnungsnummer && e.fuerWen === auftraggeber
         ? { ...e, bezahlt: true, bezahltVon: bezahltVon.slice(0, 200), bezahltAm: bezahltAm.slice(0, 10) }
         : e
     );
@@ -236,20 +252,20 @@ router.post('/mark-bezahlt', (req, res) => {
     res.json(entries);
   } catch (err) {
     console.error('[entries] POST /mark-bezahlt failed:', err);
-    res.status(500).json({ error: 'Failed to mark as paid' });
+    sendeFehler(res, err, 'Failed to mark as paid');
   }
 });
 
 // Unmark bezahlt
 router.post('/unmark-bezahlt', (req, res) => {
   try {
-    const { rechnungsnummer } = req.body as Record<string, unknown>;
-    if (typeof rechnungsnummer !== 'string') {
-      res.status(400).json({ error: 'rechnungsnummer must be a string' });
+    const { rechnungsnummer, fuerWen } = req.body as Record<string, unknown>;
+    if (typeof rechnungsnummer !== 'string' || typeof fuerWen !== 'string' || !fuerWen) {
+      res.status(400).json({ error: 'rechnungsnummer und fuerWen sind nötig' });
       return;
     }
     const entries = readJSON<TimeEntry[]>('entries.json', []).map((e) =>
-      e.rechnungsnummer === rechnungsnummer
+      e.rechnungsnummer === rechnungsnummer && e.fuerWen === fuerWen
         ? { ...e, bezahlt: false, bezahltVon: undefined, bezahltAm: undefined }
         : e
     );
@@ -257,7 +273,7 @@ router.post('/unmark-bezahlt', (req, res) => {
     res.json(entries);
   } catch (err) {
     console.error('[entries] POST /unmark-bezahlt failed:', err);
-    res.status(500).json({ error: 'Failed to unmark payment' });
+    sendeFehler(res, err, 'Failed to unmark payment');
   }
 });
 

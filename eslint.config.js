@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'dist-server']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -19,5 +19,14 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // PickTick nutzt den React Compiler nicht; die Regel meldet nur, dass der Compiler
+      // eine Komponente überspringen würde. Die übrigen Hooks-Regeln bleiben aktiv.
+      'react-hooks/preserve-manual-memoization': 'off',
+    },
+  },
+  {
+    files: ['server/**/*.ts'],
+    languageOptions: { globals: globals.node },
   },
 ])

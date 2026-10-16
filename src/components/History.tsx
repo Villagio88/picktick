@@ -15,6 +15,7 @@ import type { PeriodeModus } from '../utils/format';
 import { downloadCsv } from '../utils/csv';
 import { CalendarView } from './CalendarView';
 import { rolleKurz } from '../data/rollen';
+import { lokalesDatum } from '../utils/datum';
 
 interface Props {
   entries: TimeEntry[];
@@ -94,7 +95,7 @@ export function History({ entries, onEdit, onDelete, onNewEntry, employerColorMa
     );
 
     return result;
-  }, [entries, search, filterLeistung, filterSj, filterEmployer, sortDir]);
+  }, [entries, search, filterLeistung, filterSj, filterEmployer, sortDir, periodeModus]);
 
   const totalMinuten = filtered.reduce((s, e) => s + e.dauerMinuten, 0);
 
@@ -124,7 +125,7 @@ export function History({ entries, onEdit, onDelete, onNewEntry, employerColorMa
             </button>
           </div>
           <button
-            onClick={() => downloadCsv(filtered, `PickTick_${new Date().toISOString().slice(0, 10)}.csv`)}
+            onClick={() => downloadCsv(filtered, `PickTick_${lokalesDatum()}.csv`)}
             className="flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
           >
             <Download className="w-4 h-4" />

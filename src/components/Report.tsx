@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { Download, X, Clock } from 'lucide-react';
 import type { TimeEntry, Employer } from '../types';
 import { formatDauer, formatStunden, formatDatum, getMonatName, getMonatOrder, getPeriodeLabel, periodeKeyToRange, periodeKeyToLabel } from '../utils/format';
@@ -18,12 +18,13 @@ interface Props {
 
 
 export function Report({ entries, employer, employers, periodeKey, isCurrentPeriode, pensumMap }: Props) {
-  const now = new Date();
+  // Zeitpunkt einmal je Anzeige festhalten, damit Berechnungen stabil bleiben
+  const [now] = useState(() => new Date());
   const emp = employers.find(e => e.name === employer);
   const modus = emp?.periodeModus || 'schuljahr';
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
-  const MONAT_ORDER = getMonatOrder(modus);
+  const MONAT_ORDER = useMemo(() => getMonatOrder(modus), [modus]);
 
   const employerHasSoll = emp?.hasSoll ?? false;
   // Pauschal angerechnete Stunden je Monat, im Arbeitgeber einstellbar (0 = keine)
@@ -38,17 +39,15 @@ export function Report({ entries, employer, employers, periodeKey, isCurrentPeri
     return 1;
   }, [now]);
 
-  const [modalMonth, setModalMonth] = useState<number | null>(null);
+  // Geöffneter Monat, gemerkt zusammen mit der Periode: beim Wechsel schliesst das Modal von selbst
+  const [modal, setModal] = useState<{ monat: number; periode: string } | null>(null);
+  const modalMonth = modal && modal.periode === periodeKey ? modal.monat : null;
+  const setModalMonth = (monat: number | null) => setModal(monat == null ? null : { monat, periode: periodeKey });
 
   // Globale Perioden-Auswahl (Sidebar) statt seiteneigenem Dropdown
   const selectedSj = periodeKey;
   const isCurrentSj = isCurrentPeriode;
   const selectedLabel = periodeKeyToLabel(periodeKey, modus);
-
-  // Monats-Modal beim Perioden-Wechsel schliessen
-  useEffect(() => {
-    setModalMonth(null);
-  }, [periodeKey]);
 
   // Soll aus der Pensum-Historie der gewählten Periode (Fallback: aktuelle Einstellungen)
   const pensumInfo = getPensumInfo(emp, periodeKey, pensumMap);
@@ -90,7 +89,9 @@ export function Report({ entries, employer, employers, periodeKey, isCurrentPeri
 
     let cumIst = 0;
     let cumSoll = 0;
-    return MONAT_ORDER.map((m, i) => {
+    const zeilen = [];
+    for (let i = 0; i < MONAT_ORDER.length; i++) {
+      const m = MONAT_ORDER[i];
       const data = map.get(m)!;
       const protokolliert = data.total / 60;
       const isPast = i < currentMonthIdx;
@@ -106,7 +107,7 @@ export function Report({ entries, employer, employers, periodeKey, isCurrentPeri
       const diff = ist - sollMonat;
       const saldo = cumIst - cumSoll;
       data.entries.sort((a, b) => a.datum.localeCompare(b.datum));
-      return {
+      zeilen.push({
         monat: m,
         count: data.count,
         protokolliert,
@@ -121,9 +122,10 @@ export function Report({ entries, employer, employers, periodeKey, isCurrentPeri
         isCurrent,
         isFuture,
         entries: data.entries,
-      };
-    });
-  }, [sjEntries, SOLL_MONAT, currentMonthIdx, currentMonthFraction, employerHasSoll, pauschaleProMonat]);
+      });
+    }
+    return zeilen;
+  }, [sjEntries, SOLL_MONAT, currentMonthIdx, currentMonthFraction, employerHasSoll, pauschaleProMonat, MONAT_ORDER]);
 
   const yearTotalMin = sjEntries.reduce((s, e) => s + e.dauerMinuten, 0);
   const yearTotalWithPauschal = monthlyRows.reduce((s, r) => s + r.ist, 0);

@@ -43,6 +43,111 @@ function computeSoll(fields: {
   return { pensum: isNaN(pensum) ? 0 : pensum, sollJahr };
 }
 
+const inputCls = (filled?: boolean) =>
+  `w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${filled ? 'bg-gray-100' : 'bg-white'}`;
+
+// Sollzeit form fields (reused in new + edit)
+function SollzeitFields({
+  vollzeit,
+  setVollzeit,
+  pensum,
+  setPensum,
+  lektionen,
+  setLektionen,
+  lektVollzeit,
+  setLektVollzeit,
+  computed,
+}: {
+  vollzeit: string;
+  setVollzeit: (v: string) => void;
+  pensum: string;
+  setPensum: (v: string) => void;
+  lektionen: string;
+  setLektionen: (v: string) => void;
+  lektVollzeit: string;
+  setLektVollzeit: (v: string) => void;
+  computed: { pensum: number; sollJahr: number };
+}) {
+  const hasLekt =
+    !isNaN(parseFloat(lektionen)) &&
+    !isNaN(parseFloat(lektVollzeit)) &&
+    parseFloat(lektVollzeit) > 0;
+
+  return (
+    <>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Vollzeit-Jahresarbeitszeit
+        </label>
+        <div className="relative">
+          <input
+            type="number"
+            inputMode="decimal"
+            value={vollzeit}
+            onChange={(e) => setVollzeit(e.target.value)}
+            placeholder="z.B. 1900"
+            className={inputCls(!!vollzeit)}
+          />
+          <span className="absolute right-3 top-2 text-sm text-gray-400">Std</span>
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Lektionen <span className="font-normal text-gray-400">(optional, für Schulen)</span>
+        </label>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            inputMode="decimal"
+            value={lektionen}
+            onChange={(e) => setLektionen(e.target.value)}
+            placeholder="z.B. 10"
+            className={inputCls(!!lektionen)}
+            style={{ width: '80px' }}
+          />
+          <span className="text-gray-400">/</span>
+          <input
+            type="number"
+            inputMode="decimal"
+            value={lektVollzeit}
+            onChange={(e) => setLektVollzeit(e.target.value)}
+            placeholder="z.B. 28"
+            className={inputCls(!!lektVollzeit)}
+            style={{ width: '80px' }}
+          />
+          <span className="text-xs text-gray-500">Lekt.</span>
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Pensum {hasLekt && <span className="font-normal text-gray-400">(aus Lektionen)</span>}
+        </label>
+        <div className="relative">
+          <input
+            type="number"
+            inputMode="decimal"
+            value={hasLekt ? computed.pensum.toFixed(2) : pensum}
+            onChange={(e) => setPensum(e.target.value)}
+            readOnly={hasLekt}
+            className={`${inputCls(!hasLekt && !!pensum)} ${hasLekt ? 'bg-gray-50 text-gray-500' : ''}`}
+          />
+          <span className="absolute right-3 top-2 text-sm text-gray-400">%</span>
+        </div>
+      </div>
+      {computed.sollJahr > 0 && (
+        <div className="md:col-span-2 bg-primary-50 rounded-lg px-4 py-3">
+          <span className="text-sm font-medium text-primary-800">
+            Deine Jahresarbeitszeit: {computed.sollJahr.toFixed(1)} Stunden
+          </span>
+          <span className="text-sm text-primary-600 ml-2">
+            ({(computed.sollJahr / 12).toFixed(1)} Std/Monat)
+          </span>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function ArbeitgeberPage({ employers, onEmployersChange, entries, pensumMap, onPensumChange }: Props) {
   // New employer form
   const [newName, setNewName] = useState('');
@@ -272,110 +377,6 @@ export function ArbeitgeberPage({ employers, onEmployersChange, entries, pensumM
     }
   };
 
-  const inputCls = (filled?: boolean) =>
-    `w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${filled ? 'bg-gray-100' : 'bg-white'}`;
-
-  // Sollzeit form fields (reused in new + edit)
-  function SollzeitFields({
-    vollzeit,
-    setVollzeit,
-    pensum,
-    setPensum,
-    lektionen,
-    setLektionen,
-    lektVollzeit,
-    setLektVollzeit,
-    computed,
-  }: {
-    vollzeit: string;
-    setVollzeit: (v: string) => void;
-    pensum: string;
-    setPensum: (v: string) => void;
-    lektionen: string;
-    setLektionen: (v: string) => void;
-    lektVollzeit: string;
-    setLektVollzeit: (v: string) => void;
-    computed: { pensum: number; sollJahr: number };
-  }) {
-    const hasLekt =
-      !isNaN(parseFloat(lektionen)) &&
-      !isNaN(parseFloat(lektVollzeit)) &&
-      parseFloat(lektVollzeit) > 0;
-
-    return (
-      <>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Vollzeit-Jahresarbeitszeit
-          </label>
-          <div className="relative">
-            <input
-              type="number"
-              inputMode="decimal"
-              value={vollzeit}
-              onChange={(e) => setVollzeit(e.target.value)}
-              placeholder="z.B. 1900"
-              className={inputCls(!!vollzeit)}
-            />
-            <span className="absolute right-3 top-2 text-sm text-gray-400">Std</span>
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Lektionen <span className="font-normal text-gray-400">(optional, für Schulen)</span>
-          </label>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              inputMode="decimal"
-              value={lektionen}
-              onChange={(e) => setLektionen(e.target.value)}
-              placeholder="z.B. 10"
-              className={inputCls(!!lektionen)}
-              style={{ width: '80px' }}
-            />
-            <span className="text-gray-400">/</span>
-            <input
-              type="number"
-              inputMode="decimal"
-              value={lektVollzeit}
-              onChange={(e) => setLektVollzeit(e.target.value)}
-              placeholder="z.B. 28"
-              className={inputCls(!!lektVollzeit)}
-              style={{ width: '80px' }}
-            />
-            <span className="text-xs text-gray-500">Lekt.</span>
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Pensum {hasLekt && <span className="font-normal text-gray-400">(aus Lektionen)</span>}
-          </label>
-          <div className="relative">
-            <input
-              type="number"
-              inputMode="decimal"
-              value={hasLekt ? computed.pensum.toFixed(2) : pensum}
-              onChange={(e) => setPensum(e.target.value)}
-              readOnly={hasLekt}
-              className={`${inputCls(!hasLekt && !!pensum)} ${hasLekt ? 'bg-gray-50 text-gray-500' : ''}`}
-            />
-            <span className="absolute right-3 top-2 text-sm text-gray-400">%</span>
-          </div>
-        </div>
-        {computed.sollJahr > 0 && (
-          <div className="md:col-span-2 bg-primary-50 rounded-lg px-4 py-3">
-            <span className="text-sm font-medium text-primary-800">
-              Deine Jahresarbeitszeit: {computed.sollJahr.toFixed(1)} Stunden
-            </span>
-            <span className="text-sm text-primary-600 ml-2">
-              ({(computed.sollJahr / 12).toFixed(1)} Std/Monat)
-            </span>
-          </div>
-        )}
-      </>
-    );
-  }
 
   return (
     <div className="space-y-6">

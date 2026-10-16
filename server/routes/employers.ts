@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { sendeFehler } from '../fehler.js';
 import { readJSON, writeJSON } from '../store.js';
 
 interface Employer {
@@ -74,7 +75,7 @@ router.get('/', (_req, res) => {
     res.json(employers);
   } catch (err) {
     console.error('[employers] GET / failed:', err);
-    res.status(500).json({ error: 'Failed to read employers' });
+    sendeFehler(res, err, 'Failed to read employers');
   }
 });
 
@@ -89,7 +90,7 @@ router.get('/:name', (req, res) => {
     res.json(emp);
   } catch (err) {
     console.error('[employers] GET /:name failed:', err);
-    res.status(500).json({ error: 'Failed to read employer' });
+    sendeFehler(res, err, 'Failed to read employer');
   }
 });
 
@@ -113,7 +114,7 @@ router.post('/', (req, res) => {
     res.json(employers);
   } catch (err) {
     console.error('[employers] POST / failed:', err);
-    res.status(500).json({ error: 'Failed to create employer' });
+    sendeFehler(res, err, 'Failed to create employer');
   }
 });
 
@@ -136,7 +137,7 @@ router.put('/:name', (req, res) => {
     res.json(employers);
   } catch (err) {
     console.error('[employers] PUT /:name failed:', err);
-    res.status(500).json({ error: 'Failed to update employer' });
+    sendeFehler(res, err, 'Failed to update employer');
   }
 });
 
@@ -148,7 +149,7 @@ router.delete('/:name', (req, res) => {
     res.json(employers);
   } catch (err) {
     console.error('[employers] DELETE /:name failed:', err);
-    res.status(500).json({ error: 'Failed to delete employer' });
+    sendeFehler(res, err, 'Failed to delete employer');
   }
 });
 
